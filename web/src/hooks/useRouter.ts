@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { DEFAULT_SETTINGS, type Difficulty, type GameSettings } from '../settings'
+import { DEFAULT_SETTINGS, MIN_TIME_LIMIT_SECONDS, type Difficulty, type GameSettings } from '../settings'
 
 export type AppRoute =
   | { kind: 'home' }
@@ -23,6 +23,7 @@ function parsePuzzleRoute(kind: 'play' | 'result', parts: string[], search: stri
     params.get('solver') === null && legacyOpponent !== null && legacyOpponent !== 'none'
   )
   const competitionEnabled = params.get('competition') === '1'
+  const requestedTimeLimit = Number(params.get('limit'))
 
   if (
     ![2, 3, 4].includes(n) ||
@@ -39,7 +40,9 @@ function parsePuzzleRoute(kind: 'play' | 'result', parts: string[], search: stri
     settings: {
       difficulty,
       timed: params.get('timer') === '1',
-      timeLimitSeconds: Number(params.get('limit')) > 0 ? Number(params.get('limit')) : DEFAULT_SETTINGS.timeLimitSeconds,
+      timeLimitSeconds: Number.isSafeInteger(requestedTimeLimit) && requestedTimeLimit >= MIN_TIME_LIMIT_SECONDS
+        ? requestedTimeLimit
+        : DEFAULT_SETTINGS.timeLimitSeconds,
       solverEnabled,
       competitionEnabled,
       displayName: DEFAULT_SETTINGS.displayName,

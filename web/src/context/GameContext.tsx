@@ -87,6 +87,20 @@ function initialGrid(puzzle: Puzzle, n: number): (number | null)[] {
   return grid
 }
 
+function timedOut(state: GameState): boolean {
+  return state.timed && state.timerStarted && state.startTime > 0 && Date.now() >= state.startTime + state.timeLimitSeconds * 1000
+}
+
+function expiredState(state: GameState): GameState {
+  return {
+    ...state,
+    phase: 'gaveUp',
+    selectedTile: null,
+    endTime: Date.now(),
+    endReason: 'expired',
+  }
+}
+
 // ── Reducer ───────────────────────────────────────────────────────────────────
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -138,6 +152,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'PLACE_DIGIT': {
+      if (timedOut(state)) return expiredState(state)
       const { cellIndex } = action
       const { selectedTile, grid, tilePool, puzzle } = state
 
@@ -175,6 +190,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'DROP_DIGIT': {
+      if (timedOut(state)) return expiredState(state)
       const { digit, cellIndex } = action
       const { grid, tilePool, puzzle } = state
 
@@ -209,6 +225,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'SWAP_DIGITS': {
+      if (timedOut(state)) return expiredState(state)
       const { fromIndex, toIndex } = action
       const { grid, puzzle } = state
       const fromDigit = grid[fromIndex]
@@ -281,6 +298,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'USE_HINT': {
+      if (timedOut(state)) return expiredState(state)
       const { puzzle, solution } = state
       const nextHint = state.hintsUsed + 1
 
@@ -381,7 +399,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       }
 
     case 'OPPONENT_WON':
-      if (state.phase !== 'playing' || !state.competitionEnabled) return state
+      if (state.phase !== 'playing' || !state.competitionEnabled || (state.timed && !state.timerStarted)) return state
       return {
         ...state,
         phase: 'gaveUp',

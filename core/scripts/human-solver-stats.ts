@@ -20,10 +20,10 @@ const expertConfig: Config = {
   colWeights: { ...DEFAULT_CONFIG.colWeights, 2: [1, 3], 3: [2, 5, 1], 4: [3, 1, 4, 2] },
 };
 
-const limits: Record<number, { maxDepth: number; maxNodes: number }> = {
-  2: { maxDepth: 4, maxNodes: 1_000 },
-  3: { maxDepth: 6, maxNodes: 10_000 },
-  4: { maxDepth: 8, maxNodes: 50_000 },
+const limits: Record<number, { maxDepth: number; maxNodes: number; maxEvents: number }> = {
+  2: { maxDepth: 4, maxNodes: 1_000, maxEvents: 5_000 },
+  3: { maxDepth: 6, maxNodes: 10_000, maxEvents: 50_000 },
+  4: { maxDepth: 8, maxNodes: 50_000, maxEvents: 250_000 },
 };
 
 function emptyGrid(n: number, givens: Map<number, number>): (number | null)[] {
@@ -37,7 +37,7 @@ console.log("difficulty   N   seed   status         ms     nodes   events");
 console.log("------------------------------------------------------------");
 
 for (const n of sizes) {
-  for (const difficulty of ["novice", "standard", "expert"] as const) {
+  for (const difficulty of ["novice", "expert"] as const) {
     const config = difficulty === "expert" ? expertConfig : DEFAULT_CONFIG;
 
     for (let sample = 0; sample < samples; sample++) {

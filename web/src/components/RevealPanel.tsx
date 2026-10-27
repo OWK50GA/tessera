@@ -23,6 +23,7 @@ export default function RevealPanel() {
   const expired = state.endReason === 'expired'
   const opponentWon = state.endReason === 'opponent'
   const gaveUp = phase === 'gaveUp' && !expired && !opponentWon
+  const solved = phase === 'won'
   const elapsed = (endTime ?? Date.now()) - startTime
 
   function handleReturnToStart() {
@@ -37,8 +38,8 @@ export default function RevealPanel() {
           <p className={styles.kicker}>{expired ? 'Time expired' : opponentWon ? 'Competition result' : gaveUp ? 'Puzzle revealed' : 'Puzzle complete'}</p>
           <h2 id="reveal-title">{expired ? 'The clock ran out.' : opponentWon ? 'Mira got there first.' : gaveUp ? 'The solution was waiting.' : 'You made every line count.'}</h2>
         </div>
-        <span className={`${styles.statusMark} ${gaveUp ? styles.statusGiveUp : ''}`} aria-hidden="true">
-          {gaveUp ? '○' : '✓'}
+        <span className={`${styles.statusMark} ${solved ? '' : styles.statusGiveUp}`} aria-hidden="true">
+          {solved ? '✓' : '○'}
         </span>
       </div>
 
@@ -111,7 +112,7 @@ export default function RevealPanel() {
       </div>
 
       <div className={styles.footer}>
-        <span>{gaveUp ? 'Every puzzle teaches you something.' : 'A clean solve.'}</span>
+        <span>{solved ? 'A clean solve.' : gaveUp ? 'Every puzzle teaches you something.' : expired ? 'There is always another run.' : 'The race continues.'}</span>
         <button onClick={handleReturnToStart}>Back to start <span aria-hidden="true">↗</span></button>
       </div>
     </section>

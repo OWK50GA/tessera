@@ -5,24 +5,31 @@ import { fileURLToPath } from 'node:url'
 
 const scriptDir = fileURLToPath(new URL('.', import.meta.url))
 const coreDir = resolve(scriptDir, '../../core')
-const tscName = process.platform === 'win32' ? 'tsc.cmd' : 'tsc'
-const coreTsc = resolve(coreDir, 'node_modules', '.bin', tscName)
+const coreTsc = resolve(coreDir, 'node_modules', 'typescript', 'bin', 'tsc')
 
 function run(command, args, cwd) {
   const result = spawnSync(command, args, {
     cwd,
     stdio: 'inherit',
-    shell: process.platform === 'win32',
+    shell: false,
   })
   if (result.error) throw result.error
   if (result.status !== 0) process.exit(result.status ?? 1)
 }
 
-if (!existsSync(coreTsc)) {
-  run('pnpm', ['install', '--frozen-lockfile'], coreDir)
+function runPnpm(args, cwd) {
+  if (process.platform === 'win32') {
+    run('cmd.exe', ['/d', '/s', '/c', `pnpm ${args.join(' ')}`], cwd)
+    return
+  }
+  run('pnpm', args, cwd)
 }
 
-run(coreTsc, ['-p', 'tsconfig.build.json'], coreDir)
+if (!existsSync(coreTsc)) {
+  runPnpm(['install', '--frozen-lockfile'], coreDir)
+}
+
+run(process.execPath, [coreTsc, '-p', 'tsconfig.build.json'], coreDir)
 
 // A pnpm `file:` dependency may be a copied package rather than a symlink.
 // Keep its generated dist in sync with the freshly built core package.
@@ -40,7 +47,7 @@ if (existsSync(localCorePackage)) {
         const targetStat = statSync(target)
         if (sourceStat.dev === targetStat.dev && sourceStat.ino === targetStat.ino) continue
       }
-      cpSync(source, target, { force: true })
+      cpSync(source, target, { force: true, recursive: true })
     }
   }
 }

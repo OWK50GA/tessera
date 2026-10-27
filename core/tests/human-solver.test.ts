@@ -97,6 +97,13 @@ describe("human solver forced moves", () => {
     expect(result.events[result.events.length - 1]?.type).toBe("limit");
   });
 
+  it("keeps a terminal event when the trace event cap is reached", () => {
+    const result = solveBoundedWithTrace(puzzle, Array(9).fill(null), { maxEvents: 1 });
+    expect(result.status).toBe("solved");
+    expect(result.events).toHaveLength(1);
+    expect(result.events[0]?.type).toBe("solved");
+  });
+
   it("can solve with hidden-weight hypotheses", () => {
     const hiddenWeights = [2, 5, 1];
     const hiddenSolution = [8, 2, 7, 3, 1, 5, 9, 4, 6];

@@ -7,6 +7,7 @@ const difficulties: Difficulty[] = ['beginner', 'novice', 'intermediate', 'exper
 
 export default function SettingsScreen() {
   const [settings, setSettings] = useState<GameSettings>(() => loadSettings())
+  const [timeLimitDraft, setTimeLimitDraft] = useState(() => String(loadSettings().timeLimitSeconds))
   const { navigate } = useRouter()
 
   function updateSettings(next: GameSettings) {
@@ -14,16 +15,32 @@ export default function SettingsScreen() {
     saveSettings(next)
   }
 
+  function commitTimeLimit() {
+    const parsed = Number(timeLimitDraft)
+    const timeLimitSeconds = Number.isSafeInteger(parsed) && parsed >= MIN_TIME_LIMIT_SECONDS
+      ? parsed
+      : MIN_TIME_LIMIT_SECONDS
+    setTimeLimitDraft(String(timeLimitSeconds))
+    if (timeLimitSeconds !== settings.timeLimitSeconds) {
+      updateSettings({ ...settings, timeLimitSeconds })
+    }
+  }
+
+  function navigateWithSavedTimeLimit(path: string) {
+    commitTimeLimit()
+    navigate(path)
+  }
+
   return (
     <div className={styles.page}>
       <header className={styles.topbar}>
-        <button className={styles.brand} onClick={() => navigate('/')}>
+        <button className={styles.brand} onClick={() => navigateWithSavedTimeLimit('/')}>
           <span className={styles.brandMark} aria-hidden="true"><span /><span /><span /></span>
           Tessera
         </button>
         <nav className={styles.nav} aria-label="Settings navigation">
-          <button onClick={() => navigate('/how-to-play')}>How to play</button>
-          <button onClick={() => navigate('/')}>Back to start</button>
+          <button onClick={() => navigateWithSavedTimeLimit('/how-to-play')}>How to play</button>
+          <button onClick={() => navigateWithSavedTimeLimit('/')}>Back to start</button>
         </nav>
       </header>
 
@@ -95,8 +112,9 @@ export default function SettingsScreen() {
               type="number"
               min={MIN_TIME_LIMIT_SECONDS}
               step={1}
-              value={settings.timeLimitSeconds}
-              onChange={(event) => updateSettings({ ...settings, timeLimitSeconds: Math.max(MIN_TIME_LIMIT_SECONDS, Number(event.target.value) || MIN_TIME_LIMIT_SECONDS) })}
+              value={timeLimitDraft}
+              onChange={(event) => setTimeLimitDraft(event.target.value)}
+              onBlur={commitTimeLimit}
             />
           </label>
         </section>
@@ -161,8 +179,8 @@ export default function SettingsScreen() {
         </section>
 
         <div className={styles.footer}>
-          <button onClick={() => navigate('/')}>← Back to start</button>
-          <button className={styles.primary} onClick={() => navigate('/')}>Save and play <span aria-hidden="true">↗</span></button>
+          <button onClick={() => navigateWithSavedTimeLimit('/')}>← Back to start</button>
+          <button className={styles.primary} onClick={() => navigateWithSavedTimeLimit('/')}>Save and play <span aria-hidden="true">↗</span></button>
         </div>
       </main>
     </div>

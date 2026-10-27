@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react'
 import type { GameState } from '../context/GameContext'
 import { formatDuration } from '../hooks/useElapsedTime'
+import { MIN_TIME_LIMIT_SECONDS } from '../settings'
 import styles from './Controls.module.css'
 
 interface ControlsProps {
@@ -31,8 +33,28 @@ export default function Controls({
   onStartTimer,
   onTimeLimitChange,
 }: ControlsProps) {
+  const [timeLimitDraft, setTimeLimitDraft] = useState(() => String(timeLimitSeconds))
   const isPlaying = phase === 'playing' && (!timed || timerStarted)
   const waitingToStart = phase === 'playing' && timed && !timerStarted
+
+  useEffect(() => {
+    setTimeLimitDraft(String(timeLimitSeconds))
+  }, [timeLimitSeconds])
+
+  function commitTimeLimit(): number {
+    const parsed = Number(timeLimitDraft)
+    const next = Number.isSafeInteger(parsed) && parsed >= MIN_TIME_LIMIT_SECONDS
+      ? parsed
+      : MIN_TIME_LIMIT_SECONDS
+    setTimeLimitDraft(String(next))
+    onTimeLimitChange(next)
+    return next
+  }
+
+  function handleStartTimer() {
+    commitTimeLimit()
+    onStartTimer()
+  }
 
   return (
     <section className={styles.controls} aria-label="Puzzle controls">
@@ -48,16 +70,17 @@ export default function Controls({
             <span>Time limit</span>
             <input
               type="number"
-              min={10}
+              min={MIN_TIME_LIMIT_SECONDS}
               step={1}
-              value={timeLimitSeconds}
-              onChange={(event) => onTimeLimitChange(Number(event.target.value) || 10)}
+              value={timeLimitDraft}
+              onChange={(event) => setTimeLimitDraft(event.target.value)}
+              onBlur={commitTimeLimit}
               aria-label="Time limit in seconds"
             />
             <span>seconds</span>
           </label>
-          <button className={styles.startTimer} onClick={onStartTimer}>
-            Start game <span>{formatDuration(timeLimitSeconds * 1000)}</span>
+          <button className={styles.startTimer} onClick={handleStartTimer}>
+            Start game <span>{formatDuration((Number(timeLimitDraft) || MIN_TIME_LIMIT_SECONDS) * 1000)}</span>
           </button>
         </div>
       )}

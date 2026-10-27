@@ -377,16 +377,14 @@ export function solveBoundedWithTrace(
 ): BoundedSolverResult {
   const maxDepth = options.maxDepth ?? 4;
   const maxNodes = options.maxNodes ?? 5000;
-  const maxEvents = options.maxEvents ?? 10000;
+  const maxEvents = Math.max(1, options.maxEvents ?? 10000);
   const grid = [...initialGrid];
   const events: HumanSolverTraceEvent[] = [];
   let nodes = 0;
   let maxReachedDepth = 0;
-  let eventLimitReached = false;
 
   function emit(event: HumanSolverTraceInput): void {
     if (events.length >= maxEvents) {
-      eventLimitReached = true;
       return;
     }
     events.push({ ...event, grid: [...grid] } as HumanSolverTraceEvent);
@@ -415,7 +413,6 @@ export function solveBoundedWithTrace(
   }
 
   function search(depth: number): SearchOutcome {
-    if (eventLimitReached) return "limit";
     maxReachedDepth = Math.max(maxReachedDepth, depth);
     nodes++;
     if (nodes > maxNodes) {
@@ -505,7 +502,17 @@ export function solveBoundedWithTrace(
   const status: BoundedSolverStatus =
     outcome === "solved" ? "solved" :
       outcome === "limit" ? "limit" :
-        outcome === "stalled" ? "stalled" : "contradiction";
+      outcome === "stalled" ? "stalled" : "contradiction";
+
+  const terminalType = status === "solved" ? "solved" : status;
+  if (events[events.length - 1]?.type !== terminalType) {
+    const terminalEvent = { type: terminalType, depth: maxReachedDepth, grid: [...grid] } as HumanSolverTraceEvent;
+    if (events.length >= maxEvents) {
+      events[events.length - 1] = terminalEvent;
+    } else {
+      events.push(terminalEvent);
+    }
+  }
 
   return { status, grid: [...grid], events, nodes, depth: maxReachedDepth };
 }
