@@ -1,0 +1,25 @@
+{
+  "name": "tessera-web",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build:core": "node ./scripts/build-core.mjs",
+    "predev": "pnpm run build:core",
+    "dev": "vite",
+    "prebuild": "pnpm run build:core",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tessera/core": "file:../core",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^6.0.0"
+  }
+}

@@ -1,0 +1,16 @@
+.wrapper { min-width: 0; }
+.boardHeading { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; height: 2.3rem; margin-bottom: 0.65rem; }
+.boardLabel { margin: 0 0 0.45rem; color: var(--teal); font-size: 0.6rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+.boardHeading h2 { margin: 0; color: var(--ink); font-size: 1.25rem; }
+.level { color: var(--muted); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.competitionFlag { padding: 0.35rem 0.5rem; border: 1px solid rgba(240, 161, 91, 0.45); border-radius: 999px; color: var(--amber); background: rgba(51, 39, 31, 0.5); font-size: 0.52rem; font-weight: 800; letter-spacing: 0.08em; }
+.statusCard { margin-top: 0.75rem; padding: 0.9rem 1rem; border: 1px solid var(--line); border-radius: 0.8rem; background: rgba(20, 30, 39, 0.78); }
+.progressTrack { height: 0.32rem; overflow: hidden; border-radius: 999px; background: rgba(242, 234, 223, 0.13); }
+.progressTrack span { display: block; height: 100%; border-radius: inherit; background: var(--teal); transition: width 500ms ease; }
+.progressCopy { display: flex; justify-content: space-between; gap: 0.75rem; margin-top: 0.65rem; color: var(--muted); font: 0.62rem ui-monospace, SFMono-Regular, Menlo, monospace; }
+.status { display: flex; align-items: center; gap: 0.45rem; margin-top: 0.85rem; color: var(--muted); font-size: 0.68rem; }
+.thinkingDot, .finishedDot { width: 0.42rem; height: 0.42rem; border-radius: 50%; background: var(--amber); }
+.thinkingDot { animation: pulse 1.2s ease-in-out infinite; }
+.finishedDot { background: var(--teal); }
+.result { margin: 0.75rem 0 0; color: var(--teal); font-size: 0.7rem; font-weight: 700; line-height: 1.4; }
+@keyframes pulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }

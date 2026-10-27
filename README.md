@@ -104,13 +104,16 @@ The byte layout is designed to be consumed directly by a CKB Rust type script.
 
 ### Solver performance (current)
 
-| N | Mean solve time | Max nodes |
-|---|----------------|-----------|
-| 2 | < 1 ms | ~10 |
-| 3 | ~2 ms | ~850 |
-| 4 | ~10 s | ~8.7 M |
+| N | Mean solve time | Max solve time | Max nodes |
+|---|----------------|---------------|-----------|
+| 2 | < 1 ms | < 2 ms | ~8 |
+| 3 | ~1 ms | ~3 ms | ~750 |
+| 4 | ~1.7 s | ~5.6 s | ~8 M |
 
-N=4 exceeds the 5 s target. Optimization is tracked but deferred until the full game loop is working and playtested at N=2 and N=3.
+N=4 meets the 5 s mean target. The solver uses a backtracking algorithm with
+row-completion pruning and per-column forward checking via 32-bit bitmasks.
+See [`core/SOLVER.md`](core/SOLVER.md) for a full account of the algorithm,
+the three implementation iterations, and the benchmark progression.
 
 ---
 

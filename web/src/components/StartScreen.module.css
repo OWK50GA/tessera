@@ -1,0 +1,347 @@
+.container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem clamp(1.25rem, 5vw, 5rem) 1.5rem;
+  overflow: hidden;
+}
+
+.container::before {
+  position: absolute;
+  top: 10rem;
+  right: -5rem;
+  width: 18rem;
+  height: 18rem;
+  border: 1px solid var(--line);
+  transform: rotate(18deg);
+  content: '';
+  pointer-events: none;
+}
+
+.container::after {
+  position: absolute;
+  right: 3rem;
+  bottom: 5rem;
+  width: 7rem;
+  height: 7rem;
+  border: 1px solid var(--line);
+  transform: rotate(45deg);
+  content: '';
+  pointer-events: none;
+}
+
+.topbar,
+.footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.topbar {
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.brandMark {
+  display: grid;
+  grid-template-columns: repeat(2, 0.35rem);
+  grid-template-rows: repeat(2, 0.35rem);
+  gap: 0.12rem;
+  width: 0.82rem;
+  height: 0.82rem;
+  transform: rotate(45deg);
+}
+
+.brandMark span {
+  background: var(--amber);
+}
+
+.brandMark span:nth-child(2),
+.brandMark span:nth-child(3) {
+  background: var(--teal);
+}
+
+.topbarLinks {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.topbarLinks button {
+  padding: 0;
+  border: 0;
+  color: #d9d1c7;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.topbarLinks button:hover,
+.topbarLinks button:focus-visible {
+  color: var(--amber);
+}
+
+.topbarLinks button:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 4px;
+}
+
+.hero {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+  align-items: center;
+  gap: clamp(3rem, 9vw, 9rem);
+  width: 100%;
+  max-width: 1040px;
+  margin: auto;
+  padding: 5rem 0;
+}
+
+.intro {
+  max-width: 35rem;
+}
+
+.eyebrow,
+.sectionKicker {
+  margin: 0 0 1.25rem;
+  color: var(--amber);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  color: var(--ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(3.75rem, 7vw, 6.8rem);
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: -0.075em;
+}
+
+.subtitle {
+  max-width: 28rem;
+  margin: 2rem 0 0;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.introDetails {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 3.5rem;
+  color: var(--muted-soft);
+  font-size: 0.75rem;
+}
+
+.detailNumber {
+  color: var(--ink);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.launcher {
+  padding: clamp(1.4rem, 3vw, 2.2rem);
+  border: 1px solid var(--line-strong);
+  border-radius: 1.25rem;
+  background: rgba(20, 30, 39, 0.84);
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(10px);
+}
+
+.launcherHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.75rem;
+}
+
+.launcherHeader h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.5rem;
+  letter-spacing: -0.04em;
+}
+
+.sectionKicker {
+  margin-bottom: 0.5rem;
+  color: var(--muted);
+  font-size: 0.6rem;
+}
+
+.launcherAccent {
+  color: var(--amber);
+  font-size: 1.5rem;
+}
+
+.sizeButtons {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.sizeButton {
+  position: relative;
+  display: grid;
+  grid-template-columns: 4rem 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  color: var(--ink);
+  background: var(--surface-raised);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.sizeButton:hover,
+.sizeButton:focus-visible {
+  border-color: var(--amber);
+  background: var(--surface-bright);
+  box-shadow: 0 0.7rem 1.25rem rgba(0, 0, 0, 0.22);
+  transform: translateY(-2px);
+}
+
+.sizeNumber {
+  color: var(--amber);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.65rem;
+  letter-spacing: -0.08em;
+}
+
+.sizeName {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.arrow {
+  color: var(--muted-soft);
+  font-size: 1.1rem;
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.sizeButton:hover .arrow,
+.sizeButton:focus-visible .arrow {
+  color: var(--amber);
+  transform: translate(2px, -2px);
+}
+
+.seedSection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+.seedLabel {
+  display: block;
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.seedHint {
+  margin: 0.3rem 0 0;
+  color: var(--muted-soft);
+  font-size: 0.7rem;
+}
+
+.seedInput {
+  width: 7.5rem;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 0.55rem;
+  outline: none;
+  color: var(--ink);
+  background: var(--surface-raised);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+}
+
+.seedInput:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px var(--amber-soft);
+}
+
+
+.footer {
+  margin-top: auto;
+  color: var(--muted-soft);
+  font-size: 0.6rem;
+}
+
+@media (max-width: 760px) {
+  .container {
+    padding-top: 1.25rem;
+  }
+
+  .topbarLinks {
+    gap: 0.65rem;
+  }
+
+  .topbarLinks button {
+    font-size: 0.58rem;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    padding: 5rem 0 4rem;
+  }
+
+  .title {
+    font-size: clamp(3.6rem, 17vw, 5.5rem);
+  }
+
+  .introDetails {
+    margin-top: 2rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .seedSection {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .seedInput {
+    width: 100%;
+  }
+}

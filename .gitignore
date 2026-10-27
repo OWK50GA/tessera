@@ -1,3 +1,7 @@
+# AGENTS
 .kiro
+.agents
+
+# JAVASCRIPT
 node_modules
 dist

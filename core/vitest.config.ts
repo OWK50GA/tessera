@@ -12,6 +12,10 @@ export default defineConfig({
     /* Always show individual test names */
     reporter: "verbose",
 
+    /* Global timeout — N=4 generation can take up to ~30 s per puzzle.
+       Individual tests that need more override via { timeout: ... }. */
+    testTimeout: 90_000,
+
     /* Coverage via v8 (opt-in with pnpm test:coverage) */
     coverage: {
       provider: "v8",

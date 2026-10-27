@@ -1,0 +1,46 @@
+.screen {
+  display: grid;
+  place-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  text-align: center;
+}
+
+.kicker {
+  margin: 0 0 1rem;
+  color: var(--amber);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.screen h1 {
+  margin: 0;
+  color: var(--ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.5rem, 7vw, 5rem);
+  font-weight: 400;
+  letter-spacing: -0.06em;
+}
+
+.screen p:not(.kicker) {
+  margin: 1.25rem 0 2rem;
+  color: var(--muted);
+}
+
+.screen button {
+  justify-self: center;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 0.6rem;
+  color: var(--ink);
+  background: var(--surface-raised);
+  cursor: pointer;
+}
+
+.screen button:hover,
+.screen button:focus-visible {
+  border-color: var(--amber);
+  background: var(--surface-bright);
+}
