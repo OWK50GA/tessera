@@ -1,0 +1,41 @@
+.cell {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 600;
+  border: 1px solid #888;
+  background: #fff;
+  cursor: default;
+}
+
+button.cell {
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+button.cell:hover {
+  background: #f0f0f0;
+}
+
+.given {
+  background: #e8e8e8;
+  color: #333;
+  font-style: italic;
+}
+
+.filled {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.empty {
+  background: #fff;
+}
+
+.dropTarget {
+  border: 2px dashed #3b82f6;
+  background: #dbeafe;
+}

@@ -1,0 +1,25 @@
+.tile {
+  width: 52px;
+  height: 52px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border: 2px solid #555;
+  border-radius: 8px;
+  background: #f5f5f5;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tile:hover {
+  background: #e0e0e0;
+}
+
+.selected {
+  background: #3b82f6;
+  color: #fff;
+  border-color: #1d4ed8;
+  transform: scale(1.08);
+}
