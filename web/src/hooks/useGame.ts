@@ -49,8 +49,16 @@ export function useGameActions() {
     dispatch({ type: 'START_TIMER' })
   }
 
+  function setTimeLimit(seconds: number) {
+    dispatch({ type: 'SET_TIME_LIMIT', seconds })
+  }
+
   function timeExpired() {
     dispatch({ type: 'TIME_EXPIRED' })
+  }
+
+  function opponentWon() {
+    dispatch({ type: 'OPPONENT_WON' })
   }
 
   function returnToStart() {
@@ -69,7 +77,9 @@ export function useGameActions() {
     useHint,
     giveUp,
     startTimer,
+    setTimeLimit,
     timeExpired,
+    opponentWon,
     returnToStart,
   }
 }

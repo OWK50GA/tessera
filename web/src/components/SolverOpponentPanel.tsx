@@ -1,13 +1,20 @@
+import { useEffect } from 'react'
 import { useGameContext } from '../context/GameContext'
 import { formatDuration } from '../hooks/useElapsedTime'
 import { useSolverOpponent } from '../hooks/useSolverOpponent'
+import { useGameActions } from '../hooks/useGame'
 import PuzzleGrid from './PuzzleGrid'
 import styles from './SolverOpponentPanel.module.css'
 
 export default function SolverOpponentPanel() {
   const { state } = useGameContext()
+  const { opponentWon } = useGameActions()
   const solver = useSolverOpponent(state)
   const { puzzle, solution } = state
+
+  useEffect(() => {
+    if (state.phase === 'playing' && state.competitionEnabled && solver.finished) opponentWon()
+  }, [opponentWon, solver.finished, state.competitionEnabled, state.phase])
 
   if (!solver.enabled || !puzzle || !solution) return null
 
@@ -27,6 +34,7 @@ export default function SolverOpponentPanel() {
           <p className={styles.boardLabel}>Opponent grid</p>
           <h2>{solver.name}</h2>
         </div>
+        {state.competitionEnabled && <span className={styles.competitionFlag}>COMPETITION</span>}
       </div>
 
       <PuzzleGrid

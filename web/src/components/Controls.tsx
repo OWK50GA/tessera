@@ -1,4 +1,5 @@
 import type { GameState } from '../context/GameContext'
+import { formatDuration } from '../hooks/useElapsedTime'
 import styles from './Controls.module.css'
 
 interface ControlsProps {
@@ -13,6 +14,7 @@ interface ControlsProps {
   timerStarted: boolean
   timeLimitSeconds: number
   onStartTimer: () => void
+  onTimeLimitChange: (seconds: number) => void
 }
 
 export default function Controls({
@@ -27,6 +29,7 @@ export default function Controls({
   timerStarted,
   timeLimitSeconds,
   onStartTimer,
+  onTimeLimitChange,
 }: ControlsProps) {
   const isPlaying = phase === 'playing' && (!timed || timerStarted)
   const waitingToStart = phase === 'playing' && timed && !timerStarted
@@ -41,8 +44,20 @@ export default function Controls({
       {waitingToStart && (
         <div className={styles.timerGate}>
           <p>Targets are locked until the timer starts.</p>
+          <label className={styles.timeLimitControl}>
+            <span>Time limit</span>
+            <input
+              type="number"
+              min={10}
+              step={1}
+              value={timeLimitSeconds}
+              onChange={(event) => onTimeLimitChange(Number(event.target.value) || 10)}
+              aria-label="Time limit in seconds"
+            />
+            <span>seconds</span>
+          </label>
           <button className={styles.startTimer} onClick={onStartTimer}>
-            Start timer <span>{Math.round(timeLimitSeconds / 60)} min</span>
+            Start game <span>{formatDuration(timeLimitSeconds * 1000)}</span>
           </button>
         </div>
       )}

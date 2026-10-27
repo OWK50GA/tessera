@@ -25,6 +25,7 @@ function AppInner() {
       state.timed === route.settings.timed &&
       state.timeLimitSeconds === route.settings.timeLimitSeconds &&
       state.solverEnabled === route.settings.solverEnabled
+      && state.competitionEnabled === route.settings.competitionEnabled
 
     // Deep links can start a puzzle directly, even when the app was opened at
     // /play/:n/:seed instead of through the introduction screen.
@@ -39,6 +40,7 @@ function AppInner() {
         timed: state.timed,
         timeLimitSeconds: state.timeLimitSeconds,
         solverEnabled: state.solverEnabled,
+        competitionEnabled: state.competitionEnabled,
         displayName: state.displayName,
       }), true)
     }
@@ -49,6 +51,7 @@ function AppInner() {
         timed: state.timed,
         timeLimitSeconds: state.timeLimitSeconds,
         solverEnabled: state.solverEnabled,
+        competitionEnabled: state.competitionEnabled,
         displayName: state.displayName,
       }), true)
     }

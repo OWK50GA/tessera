@@ -5,13 +5,14 @@ import styles from './StartScreen.module.css'
 
 export default function StartScreen() {
   const [seedInput, setSeedInput] = useState('')
+  const [defaultSettings] = useState(loadSettings)
   const { navigate } = useRouter()
 
   function handleStart(n: number) {
     const num = Number(seedInput.trim())
     const seed = seedInput.trim() !== '' && Number.isSafeInteger(num) && num >= 0 ? num : undefined
     const resolvedSeed = seed ?? Math.floor(Math.random() * 0xFFFFFFFF)
-    navigate(playPath(n, resolvedSeed, loadSettings()))
+    navigate(playPath(n, resolvedSeed, defaultSettings))
   }
 
   return (
@@ -90,6 +91,7 @@ export default function StartScreen() {
               placeholder="Random"
             />
           </div>
+
         </section>
       </main>
 

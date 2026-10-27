@@ -7,6 +7,7 @@ export interface GameSettings {
   timed: boolean
   timeLimitSeconds: number
   solverEnabled: boolean
+  competitionEnabled: boolean
   displayName: string
 }
 
@@ -22,6 +23,7 @@ export interface DifficultyProfile {
 }
 
 const STORAGE_KEY = 'tessera.settings.v1'
+export const MIN_TIME_LIMIT_SECONDS = 10
 
 const irregularWeights: Record<number, number[]> = {
   2: [1, 3],
@@ -48,6 +50,7 @@ export const DEFAULT_SETTINGS: GameSettings = {
   timed: false,
   timeLimitSeconds: 300,
   solverEnabled: false,
+  competitionEnabled: false,
   displayName: 'You',
 }
 
@@ -126,6 +129,7 @@ export function loadSettings(): GameSettings {
       difficulty?: string
       timed?: unknown
       solverEnabled?: unknown
+      competitionEnabled?: unknown
       opponent?: string
       displayName?: unknown
       timeLimitSeconds?: unknown
@@ -136,12 +140,13 @@ export function loadSettings(): GameSettings {
         ? difficulty
         : DEFAULT_SETTINGS.difficulty,
       timed: parsed.timed === true,
-      timeLimitSeconds: typeof parsed.timeLimitSeconds === 'number' && Number.isFinite(parsed.timeLimitSeconds) && parsed.timeLimitSeconds > 0
+      timeLimitSeconds: typeof parsed.timeLimitSeconds === 'number' && Number.isSafeInteger(parsed.timeLimitSeconds) && parsed.timeLimitSeconds >= MIN_TIME_LIMIT_SECONDS
         ? Math.round(parsed.timeLimitSeconds)
         : DEFAULT_SETTINGS.timeLimitSeconds,
       solverEnabled: parsed.solverEnabled === true || (
         parsed.solverEnabled === undefined && parsed.opponent !== undefined && parsed.opponent !== 'none'
       ),
+      competitionEnabled: parsed.competitionEnabled === true,
       displayName: typeof parsed.displayName === 'string' && parsed.displayName.trim() !== ''
         ? parsed.displayName.trim().slice(0, 24)
         : DEFAULT_SETTINGS.displayName,

@@ -22,6 +22,7 @@ function parsePuzzleRoute(kind: 'play' | 'result', parts: string[], search: stri
   const solverEnabled = params.get('solver') === '1' || (
     params.get('solver') === null && legacyOpponent !== null && legacyOpponent !== 'none'
   )
+  const competitionEnabled = params.get('competition') === '1'
 
   if (
     ![2, 3, 4].includes(n) ||
@@ -40,6 +41,7 @@ function parsePuzzleRoute(kind: 'play' | 'result', parts: string[], search: stri
       timed: params.get('timer') === '1',
       timeLimitSeconds: Number(params.get('limit')) > 0 ? Number(params.get('limit')) : DEFAULT_SETTINGS.timeLimitSeconds,
       solverEnabled,
+      competitionEnabled,
       displayName: DEFAULT_SETTINGS.displayName,
     },
   }
@@ -67,6 +69,7 @@ function settingsQuery(settings: GameSettings): string {
     timer: settings.timed ? '1' : '0',
     limit: String(settings.timeLimitSeconds),
     solver: settings.solverEnabled ? '1' : '0',
+    competition: settings.competitionEnabled ? '1' : '0',
   })
   return `?${params.toString()}`
 }

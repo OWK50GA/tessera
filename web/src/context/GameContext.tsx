@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer } from 'react'
 import { generatePuzzle, mulberry32, verify } from '@tessera/core'
 import type { Puzzle } from '@tessera/core'
-import { DEFAULT_SETTINGS, getDifficultyProfile, type Difficulty, type GameSettings } from '../settings'
+import { DEFAULT_SETTINGS, getDifficultyProfile, MIN_TIME_LIMIT_SECONDS, type Difficulty, type GameSettings } from '../settings'
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
@@ -13,6 +13,7 @@ export interface GameState {
   timed: boolean
   timeLimitSeconds: number
   solverEnabled: boolean
+  competitionEnabled: boolean
   displayName: string
   showWeights: boolean
   showPartialSums: boolean
@@ -29,7 +30,7 @@ export interface GameState {
   startTime: number
   timerStarted: boolean
   endTime: number | null
-  endReason: 'solved' | 'gaveUp' | 'expired' | null
+  endReason: 'solved' | 'gaveUp' | 'expired' | 'opponent' | null
 }
 
 const initialState: GameState = {
@@ -40,6 +41,7 @@ const initialState: GameState = {
   timed: DEFAULT_SETTINGS.timed,
   timeLimitSeconds: DEFAULT_SETTINGS.timeLimitSeconds,
   solverEnabled: DEFAULT_SETTINGS.solverEnabled,
+  competitionEnabled: DEFAULT_SETTINGS.competitionEnabled,
   displayName: DEFAULT_SETTINGS.displayName,
   showWeights: getDifficultyProfile(DEFAULT_SETTINGS.difficulty).showWeights,
   showPartialSums: getDifficultyProfile(DEFAULT_SETTINGS.difficulty).showPartialSums,
@@ -72,7 +74,9 @@ export type GameAction =
   | { type: 'USE_HINT' }
   | { type: 'GIVE_UP' }
   | { type: 'START_TIMER' }
+  | { type: 'SET_TIME_LIMIT'; seconds: number }
   | { type: 'TIME_EXPIRED' }
+  | { type: 'OPPONENT_WON' }
   | { type: 'RETURN_TO_START' }
 
 function initialGrid(puzzle: Puzzle, n: number): (number | null)[] {
@@ -110,6 +114,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         timed: settings.timed,
         timeLimitSeconds: settings.timeLimitSeconds,
         solverEnabled: settings.solverEnabled,
+        competitionEnabled: settings.competitionEnabled,
         displayName: settings.displayName,
         showWeights: profile.showWeights,
         showPartialSums: profile.showPartialSums,
@@ -355,6 +360,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       if (state.phase !== 'playing' || !state.timed || state.timerStarted) return state
       return { ...state, timerStarted: true, startTime: Date.now() }
 
+    case 'SET_TIME_LIMIT':
+      if (
+        state.phase !== 'playing' ||
+        !state.timed ||
+        state.timerStarted ||
+        !Number.isSafeInteger(action.seconds) ||
+        action.seconds < MIN_TIME_LIMIT_SECONDS
+      ) return state
+      return { ...state, timeLimitSeconds: action.seconds }
+
     case 'TIME_EXPIRED':
       if (state.phase !== 'playing' || !state.timed || !state.timerStarted) return state
       return {
@@ -363,6 +378,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         selectedTile: null,
         endTime: Date.now(),
         endReason: 'expired',
+      }
+
+    case 'OPPONENT_WON':
+      if (state.phase !== 'playing' || !state.competitionEnabled) return state
+      return {
+        ...state,
+        phase: 'gaveUp',
+        selectedTile: null,
+        endTime: Date.now(),
+        endReason: 'opponent',
       }
 
     case 'RETURN_TO_START':

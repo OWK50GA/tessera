@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useGameActions } from '../hooks/useGame'
 import { useDragDrop } from '../hooks/useDragDrop'
-import { useRouter } from '../hooks/useRouter'
+import { playPath, useRouter } from '../hooks/useRouter'
 import { formatDuration, useElapsedTime } from '../hooks/useElapsedTime'
 import PuzzleGrid from './PuzzleGrid'
 import DigitPool from './DigitPool'
@@ -9,6 +9,7 @@ import Controls from './Controls'
 import HintPanel from './HintPanel'
 import RevealPanel from './RevealPanel'
 import SolverOpponentPanel from './SolverOpponentPanel'
+import FailureOverlay from './FailureOverlay'
 import styles from './GameBoard.module.css'
 
 export default function GameBoard() {
@@ -23,6 +24,7 @@ export default function GameBoard() {
     giveUp,
     startTimer,
     timeExpired,
+    setTimeLimit,
     returnToStart,
   } = useGameActions()
   const { navigate } = useRouter()
@@ -39,15 +41,23 @@ export default function GameBoard() {
     timed,
     timeLimitSeconds,
     timerStarted,
+    endReason,
     showWeights,
     showPartialSums,
     startTime,
     endTime,
+    displayName,
   } = state
   const dragDrop = useDragDrop(dropDigit, swapDigits)
   const elapsed = useElapsedTime(startTime, endTime, timed && timerStarted && phase === 'playing')
   const remaining = Math.max(0, timeLimitSeconds * 1000 - elapsed)
   const showLineTargets = !timed || timerStarted
+  const timeRatio = timeLimitSeconds > 0 ? remaining / (timeLimitSeconds * 1000) : 0
+  const timerTone = timeRatio > 0.5 ? styles.timerGreen : timeRatio > 0.2 ? styles.timerAmber : styles.timerRed
+  const timeExpiredState = phase === 'gaveUp' && endReason === 'expired'
+  const opponentLostState = phase === 'gaveUp' && endReason === 'opponent'
+  const failureState = timeExpiredState || opponentLostState
+  const [failureDismissed, setFailureDismissed] = useState(false)
 
   useEffect(() => {
     if (phase !== 'playing' || (timed && !timerStarted)) return
@@ -66,7 +76,19 @@ export default function GameBoard() {
     timeExpired()
   }, [phase, remaining, timeExpired, timed, timerStarted])
 
+  useEffect(() => {
+    if (!failureState) {
+      setFailureDismissed(false)
+      return
+    }
+    setFailureDismissed(false)
+    const timeout = window.setTimeout(() => setFailureDismissed(true), 2400)
+    return () => window.clearTimeout(timeout)
+  }, [failureState])
+
   if (!puzzle) return null
+
+  const showFailureTransition = failureState && !failureDismissed
 
   const { n } = puzzle
   const filledCount = grid.filter((value) => value !== null).length
@@ -88,8 +110,21 @@ export default function GameBoard() {
     navigate('/')
   }
 
+  function handleTimeLimitChange(seconds: number) {
+    setTimeLimit(seconds)
+    navigate(playPath(n, seed, {
+      difficulty,
+      timed,
+      timeLimitSeconds: seconds,
+      solverEnabled: state.solverEnabled,
+      competitionEnabled: state.competitionEnabled,
+      displayName,
+    }), true)
+  }
+
   return (
     <div className={styles.page}>
+      {(!timeExpiredState || showFailureTransition) && <div className={`${styles.playFrame} ${showFailureTransition ? styles.failurePlayFrame : ''}`}>
       <header className={styles.topbar}>
         <div className={styles.brand}>
           <span className={styles.brandMark} aria-hidden="true">
@@ -103,8 +138,9 @@ export default function GameBoard() {
           <div className={styles.topMeta}>
             <span className={styles.puzzleLabel}>Puzzle / {n}×{n}</span>
             <span className={styles.difficulty}>{difficulty}</span>
+            {state.competitionEnabled && state.solverEnabled && <span className={styles.competitionBadge}>Competition</span>}
             <span className={styles.seed}>Seed {seed}</span>
-            {timed && timerStarted && <span className={styles.timer}>Time {formatDuration(remaining)} left</span>}
+            {timed && timerStarted && <span className={`${styles.timer} ${timerTone}`}>Time {formatDuration(remaining)} left</span>}
             <span className={`${styles.phase} ${phase === 'won' ? styles.phaseWon : ''}`}>
             {phase === 'won' ? 'Solved' : 'In progress'}
           </span>
@@ -191,6 +227,7 @@ export default function GameBoard() {
             timerStarted={timerStarted}
             timeLimitSeconds={timeLimitSeconds}
             onStartTimer={startTimer}
+            onTimeLimitChange={handleTimeLimitChange}
             onReturnToStart={handleReturnToStart}
           />
 
@@ -209,8 +246,10 @@ export default function GameBoard() {
           </div>
         </aside>
       </main>
+        {showFailureTransition && <FailureOverlay title={opponentLostState ? 'DEFEAT' : 'TIMEOUT'} subtitle={opponentLostState ? 'Mira finished first' : 'Time expired'} />}
+      </div>}
 
-      <RevealPanel />
+      {(!failureState || failureDismissed) && <RevealPanel />}
     </div>
   )
 }

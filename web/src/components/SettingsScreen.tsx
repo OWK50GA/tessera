@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getDifficultyProfile, loadSettings, saveSettings, type Difficulty, type GameSettings } from '../settings'
+import { getDifficultyProfile, loadSettings, MIN_TIME_LIMIT_SECONDS, saveSettings, type Difficulty, type GameSettings } from '../settings'
 import { useRouter } from '../hooks/useRouter'
 import styles from './SettingsScreen.module.css'
 
@@ -89,22 +89,16 @@ export default function SettingsScreen() {
             />
             <span className={styles.toggle} aria-hidden="true"><span /></span>
           </label>
-          {settings.timed && (
-            <label className={styles.limitField}>
-              <span>Maximum time per game</span>
-              <select
-                value={settings.timeLimitSeconds}
-                onChange={(event) => updateSettings({ ...settings, timeLimitSeconds: Number(event.target.value) })}
-              >
-                <option value={120}>2 minutes</option>
-                <option value={180}>3 minutes</option>
-                <option value={300}>5 minutes</option>
-                <option value={600}>10 minutes</option>
-                <option value={1200}>20 minutes</option>
-                <option value={1800}>30 minutes</option>
-              </select>
-            </label>
-          )}
+          <label className={styles.limitField}>
+            <span>Default time limit <small>seconds, minimum {MIN_TIME_LIMIT_SECONDS}</small></span>
+            <input
+              type="number"
+              min={MIN_TIME_LIMIT_SECONDS}
+              step={1}
+              value={settings.timeLimitSeconds}
+              onChange={(event) => updateSettings({ ...settings, timeLimitSeconds: Math.max(MIN_TIME_LIMIT_SECONDS, Number(event.target.value) || MIN_TIME_LIMIT_SECONDS) })}
+            />
+          </label>
         </section>
 
         <section className={styles.section} aria-labelledby="opponent-heading">
@@ -126,6 +120,23 @@ export default function SettingsScreen() {
             />
             <span className={styles.toggle} aria-hidden="true"><span /></span>
           </label>
+          {settings.solverEnabled && (
+            <>
+              <label className={`${styles.toggleRow} ${styles.competitionRow}`}>
+                <span>
+                  <strong>Competition mode</strong>
+                  <small>Mira can finish first and end your run.</small>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={settings.competitionEnabled}
+                  onChange={(event) => updateSettings({ ...settings, competitionEnabled: event.target.checked })}
+                />
+                <span className={styles.toggle} aria-hidden="true"><span /></span>
+              </label>
+              <p className={styles.competitionNotice}>Competition is a real race. If Mira completes the puzzle first, the session ends in defeat.</p>
+            </>
+          )}
           <p className={styles.localNote}>The solver runs locally in your browser. It does not use a network or see your board.</p>
         </section>
 

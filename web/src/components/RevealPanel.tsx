@@ -21,7 +21,8 @@ export default function RevealPanel() {
   if (!puzzle || !solution || (phase !== 'won' && phase !== 'gaveUp')) return null
 
   const expired = state.endReason === 'expired'
-  const gaveUp = phase === 'gaveUp' && !expired
+  const opponentWon = state.endReason === 'opponent'
+  const gaveUp = phase === 'gaveUp' && !expired && !opponentWon
   const elapsed = (endTime ?? Date.now()) - startTime
 
   function handleReturnToStart() {
@@ -33,8 +34,8 @@ export default function RevealPanel() {
     <section className={styles.panel} aria-labelledby="reveal-title">
       <div className={styles.header}>
         <div>
-          <p className={styles.kicker}>{expired ? 'Time expired' : gaveUp ? 'Puzzle revealed' : 'Puzzle complete'}</p>
-          <h2 id="reveal-title">{expired ? 'The clock ran out.' : gaveUp ? 'The solution was waiting.' : 'You made every line count.'}</h2>
+          <p className={styles.kicker}>{expired ? 'Time expired' : opponentWon ? 'Competition result' : gaveUp ? 'Puzzle revealed' : 'Puzzle complete'}</p>
+          <h2 id="reveal-title">{expired ? 'The clock ran out.' : opponentWon ? 'Mira got there first.' : gaveUp ? 'The solution was waiting.' : 'You made every line count.'}</h2>
         </div>
         <span className={`${styles.statusMark} ${gaveUp ? styles.statusGiveUp : ''}`} aria-hidden="true">
           {gaveUp ? '○' : '✓'}
@@ -45,7 +46,7 @@ export default function RevealPanel() {
         <div className={styles.solutionBlock}>
           <div className={styles.blockHeader}>
             <span>Solution grid</span>
-          {(gaveUp || expired) && <span className={styles.diffLegend}><i />Your mismatches</span>}
+          {(gaveUp || expired || opponentWon) && <span className={styles.diffLegend}><i />Your mismatches</span>}
           </div>
           <div
             className={styles.solutionGrid}
@@ -53,7 +54,7 @@ export default function RevealPanel() {
             aria-label="Solution grid"
           >
             {solution.map((digit, index) => {
-              const differs = (gaveUp || expired) && grid[index] !== digit
+              const differs = (gaveUp || expired || opponentWon) && grid[index] !== digit
               return (
                 <div key={index} className={`${styles.solutionCell} ${differs ? styles.different : ''}`}>
                   {digit}
