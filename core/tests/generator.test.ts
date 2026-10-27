@@ -160,6 +160,13 @@ describe("generatePuzzle — seeds that require retries", () => {
       expect(countSolutions(puzzle, 2).count).toBe(1);
     }
   });
+
+  it("tile pool never equals solution order across a sweep of N=2 seeds", () => {
+    for (let seed = 0; seed < 200; seed++) {
+      const { solution, tilePool } = generatePuzzle(seed, 2, DEFAULT_CONFIG);
+      expect(tilePool).not.toEqual(solution);
+    }
+  });
 });
 
 // ── Test-vector file verification ─────────────────────────────────────────────

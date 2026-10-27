@@ -97,6 +97,15 @@ export function generatePuzzle(
     const poolRng = mulberry32(poolSeed(currentSeed));
     const tilePool = seededShuffle(digits, poolRng);
 
+    // Guard: if the pool happens to be identical to the solution, swap the
+    // first two entries to break the tie.  This keeps the pool deterministic
+    // and guarantees the invariant that pool order ≠ solution order.
+    if (tilePool.every((v, i) => v === solution[i])) {
+      const tmp = tilePool[0];
+      tilePool[0] = tilePool[1] as number;
+      tilePool[1] = tmp as number;
+    }
+
     return { puzzle, tilePool, solution };
   }
 
