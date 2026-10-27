@@ -1,11 +1,13 @@
 import { DEFAULT_CONFIG, type Config } from '@tessera/core'
 
-export type Difficulty = 'novice' | 'standard' | 'expert'
+export type Difficulty = 'beginner' | 'novice' | 'intermediate' | 'expert' | 'professional'
 
 export interface GameSettings {
   difficulty: Difficulty
   timed: boolean
+  timeLimitSeconds: number
   solverEnabled: boolean
+  displayName: string
 }
 
 export interface DifficultyProfile {
@@ -27,6 +29,12 @@ const irregularWeights: Record<number, number[]> = {
   4: [3, 1, 4, 2],
 }
 
+const professionalWeights: Record<number, number[]> = {
+  2: [3, 1],
+  3: [5, 1, 2],
+  4: [4, 2, 1, 3],
+}
+
 function profileConfig(weights: Record<number, number[]>): Config {
   return {
     ...DEFAULT_CONFIG,
@@ -38,15 +46,30 @@ function profileConfig(weights: Record<number, number[]>): Config {
 export const DEFAULT_SETTINGS: GameSettings = {
   difficulty: 'novice',
   timed: false,
+  timeLimitSeconds: 300,
   solverEnabled: false,
+  displayName: 'You',
 }
 
 export function getDifficultyProfile(difficulty: Difficulty): DifficultyProfile {
-  if (difficulty === 'standard') {
+  if (difficulty === 'beginner') {
     return {
       difficulty,
-      label: 'Standard',
-      description: 'Fewer hints and less live feedback. The numbers do more of the talking.',
+      label: 'Beginner',
+      description: 'A welcoming start with fixed digits, visible guidance, and generous help.',
+      showWeights: true,
+      showPartialSums: true,
+      generationLabel: 'Classic pattern with givens',
+      maxHintsFor: (n) => Math.max(2, n),
+      config: { ...profileConfig(DEFAULT_CONFIG.rowWeights), givensBySize: { 2: 1, 3: 2, 4: 3 } },
+    }
+  }
+
+  if (difficulty === 'intermediate') {
+    return {
+      difficulty: 'intermediate',
+      label: 'Intermediate',
+      description: 'Less live feedback and fewer hints. The numbers do more of the talking.',
       showWeights: true,
       showPartialSums: false,
       generationLabel: 'Standard pattern',
@@ -68,10 +91,23 @@ export function getDifficultyProfile(difficulty: Difficulty): DifficultyProfile 
     }
   }
 
+  if (difficulty === 'professional') {
+    return {
+      difficulty,
+      label: 'Professional',
+      description: 'The full contest: hidden information, irregular patterns, and no hints.',
+      showWeights: false,
+      showPartialSums: false,
+      generationLabel: 'Professional irregular pattern',
+      maxHintsFor: () => 0,
+      config: profileConfig(professionalWeights),
+    }
+  }
+
   return {
     difficulty,
     label: 'Novice',
-    description: 'The welcoming Tessera experience, with visible guidance and generous help.',
+    description: 'The original Tessera experience, with visible guidance and no fixed digits.',
     showWeights: true,
     showPartialSums: true,
     generationLabel: 'Classic pattern',
@@ -86,16 +122,29 @@ export function loadSettings(): GameSettings {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
     if (!raw) return DEFAULT_SETTINGS
-    const parsed = JSON.parse(raw) as Partial<GameSettings> & { opponent?: string }
-    const difficulty = parsed.difficulty
+    const parsed = JSON.parse(raw) as {
+      difficulty?: string
+      timed?: unknown
+      solverEnabled?: unknown
+      opponent?: string
+      displayName?: unknown
+      timeLimitSeconds?: unknown
+    }
+    const difficulty = parsed.difficulty === 'standard' ? 'intermediate' : parsed.difficulty
     return {
-      difficulty: difficulty === 'novice' || difficulty === 'standard' || difficulty === 'expert'
+      difficulty: difficulty === 'beginner' || difficulty === 'novice' || difficulty === 'intermediate' || difficulty === 'expert' || difficulty === 'professional'
         ? difficulty
         : DEFAULT_SETTINGS.difficulty,
       timed: parsed.timed === true,
+      timeLimitSeconds: typeof parsed.timeLimitSeconds === 'number' && Number.isFinite(parsed.timeLimitSeconds) && parsed.timeLimitSeconds > 0
+        ? Math.round(parsed.timeLimitSeconds)
+        : DEFAULT_SETTINGS.timeLimitSeconds,
       solverEnabled: parsed.solverEnabled === true || (
         parsed.solverEnabled === undefined && parsed.opponent !== undefined && parsed.opponent !== 'none'
       ),
+      displayName: typeof parsed.displayName === 'string' && parsed.displayName.trim() !== ''
+        ? parsed.displayName.trim().slice(0, 24)
+        : DEFAULT_SETTINGS.displayName,
     }
   } catch {
     return DEFAULT_SETTINGS

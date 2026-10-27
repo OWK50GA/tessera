@@ -3,7 +3,7 @@ import { getDifficultyProfile, loadSettings, saveSettings, type Difficulty, type
 import { useRouter } from '../hooks/useRouter'
 import styles from './SettingsScreen.module.css'
 
-const difficulties: Difficulty[] = ['novice', 'standard', 'expert']
+const difficulties: Difficulty[] = ['beginner', 'novice', 'intermediate', 'expert', 'professional']
 
 export default function SettingsScreen() {
   const [settings, setSettings] = useState<GameSettings>(() => loadSettings())
@@ -44,7 +44,7 @@ export default function SettingsScreen() {
           </div>
 
           <div className={styles.difficultyGrid}>
-            {difficulties.map((difficulty) => {
+            {difficulties.map((difficulty, index) => {
               const profile = getDifficultyProfile(difficulty)
               const active = settings.difficulty === difficulty
               return (
@@ -54,7 +54,7 @@ export default function SettingsScreen() {
                   onClick={() => updateSettings({ ...settings, difficulty })}
                   aria-pressed={active}
                 >
-                  <span className={styles.cardIndex}>{difficulty === 'novice' ? '01' : difficulty === 'standard' ? '02' : '03'}</span>
+                  <span className={styles.cardIndex}>{String(index + 1).padStart(2, '0')}</span>
                   <span className={styles.cardTitle}>{profile.label}</span>
                   <span className={styles.cardDescription}>{profile.description}</span>
                   <span className={styles.cardDetails}>
@@ -89,6 +89,22 @@ export default function SettingsScreen() {
             />
             <span className={styles.toggle} aria-hidden="true"><span /></span>
           </label>
+          {settings.timed && (
+            <label className={styles.limitField}>
+              <span>Maximum time per game</span>
+              <select
+                value={settings.timeLimitSeconds}
+                onChange={(event) => updateSettings({ ...settings, timeLimitSeconds: Number(event.target.value) })}
+              >
+                <option value={120}>2 minutes</option>
+                <option value={180}>3 minutes</option>
+                <option value={300}>5 minutes</option>
+                <option value={600}>10 minutes</option>
+                <option value={1200}>20 minutes</option>
+                <option value={1800}>30 minutes</option>
+              </select>
+            </label>
+          )}
         </section>
 
         <section className={styles.section} aria-labelledby="opponent-heading">
@@ -111,6 +127,26 @@ export default function SettingsScreen() {
             <span className={styles.toggle} aria-hidden="true"><span /></span>
           </label>
           <p className={styles.localNote}>The solver runs locally in your browser. It does not use a network or see your board.</p>
+        </section>
+
+        <section className={styles.section} aria-labelledby="name-heading">
+          <div className={styles.sectionHeading}>
+            <div>
+              <p className={styles.sectionKicker}>04 / Identity</p>
+              <h2 id="name-heading">Choose a display name</h2>
+            </div>
+          </div>
+          <label className={styles.nameField}>
+            <span>Shown above your grid when playing against Mira.</span>
+            <input
+              type="text"
+              maxLength={24}
+              value={settings.displayName}
+              onChange={(event) => updateSettings({ ...settings, displayName: event.target.value })}
+              placeholder="Your name"
+            />
+          </label>
+          <p className={styles.localNote}>Your display name stays on this device and is not uploaded.</p>
         </section>
 
         <div className={styles.footer}>

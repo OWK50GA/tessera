@@ -114,6 +114,16 @@ export function generatePuzzle(
       ),
     );
 
+    const givenCount = Math.max(
+      0,
+      Math.min(n * n, config.givensBySize?.[n] ?? config.defaultGivens),
+    );
+    const givenRng = mulberry32((currentSeed + 0x40000000) >>> 0);
+    const givenIndices = seededShuffle(
+      Array.from({ length: n * n }, (_, index) => index),
+      givenRng,
+    ).slice(0, givenCount);
+
     const puzzle: Puzzle = {
       id: new Uint8Array(8),
       n,
@@ -121,7 +131,7 @@ export function generatePuzzle(
       colWeights,
       rowTargets,
       colTargets,
-      givens: new Map(),
+      givens: new Map(givenIndices.map((index) => [index, solution[index] as number])),
     };
     puzzle.id = derivePuzzleId(puzzle);
 

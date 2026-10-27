@@ -9,5 +9,6 @@ export * from "./check.js";
 export * from "./codec.js";
 // Phase 2
 export * from "./solver.js";
+export * from "./human-solver.js";
 // Phase 3
 export * from "./generator.js";

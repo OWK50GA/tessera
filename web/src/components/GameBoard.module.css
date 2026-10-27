@@ -218,6 +218,10 @@
   text-transform: uppercase;
 }
 
+.solverBoardLabel {
+  min-height: 2.3rem;
+}
+
 .boardCard {
   padding: clamp(1rem, 3vw, 2rem);
   border: 1px solid var(--line);
@@ -401,7 +405,7 @@
   font-size: 0.62rem;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1250px) {
   .versusBoards {
     grid-template-columns: minmax(0, 1fr);
   }

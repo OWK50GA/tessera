@@ -10,6 +10,7 @@ interface PuzzleGridProps {
   grid: (number | null)[]
   showWeights: boolean
   showPartialSums: boolean
+  showTargets: boolean
   legendText: string
   footerText: string
   footerCode: string
@@ -30,6 +31,7 @@ export default function PuzzleGrid({
   grid,
   showWeights,
   showPartialSums,
+  showTargets,
   legendText,
   footerText,
   footerCode,
@@ -116,6 +118,7 @@ export default function PuzzleGrid({
               target={rowTargets[row] ?? 0}
               lineResult={rowResults[row] ?? { lineIndex: row, lineStatus: { status: 'incomplete', partialSum: 0 } }}
               showPartialSum={showPartialSums}
+              showTarget={showTargets}
             />
           </Fragment>
         ))}
@@ -127,6 +130,7 @@ export default function PuzzleGrid({
             target={colTargets[column] ?? 0}
             lineResult={colResults[column] ?? { lineIndex: column, lineStatus: { status: 'incomplete', partialSum: 0 } }}
             showPartialSum={showPartialSums}
+            showTarget={showTargets}
           />
         ))}
         <div className={styles.corner} />

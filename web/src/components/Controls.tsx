@@ -9,6 +9,10 @@ interface ControlsProps {
   onHint: () => void
   onGiveUp: () => void
   onReturnToStart: () => void
+  timed: boolean
+  timerStarted: boolean
+  timeLimitSeconds: number
+  onStartTimer: () => void
 }
 
 export default function Controls({
@@ -19,8 +23,13 @@ export default function Controls({
   onHint,
   onGiveUp,
   onReturnToStart,
+  timed,
+  timerStarted,
+  timeLimitSeconds,
+  onStartTimer,
 }: ControlsProps) {
-  const isPlaying = phase === 'playing'
+  const isPlaying = phase === 'playing' && (!timed || timerStarted)
+  const waitingToStart = phase === 'playing' && timed && !timerStarted
 
   return (
     <section className={styles.controls} aria-label="Puzzle controls">
@@ -28,6 +37,15 @@ export default function Controls({
         <span className={styles.kicker}>Tools</span>
         <span className={styles.count}>{hintsUsed}/{maxHints} hints</span>
       </div>
+
+      {waitingToStart && (
+        <div className={styles.timerGate}>
+          <p>Targets are locked until the timer starts.</p>
+          <button className={styles.startTimer} onClick={onStartTimer}>
+            Start timer <span>{Math.round(timeLimitSeconds / 60)} min</span>
+          </button>
+        </div>
+      )}
 
       <div className={styles.actions}>
         <button className={styles.actionButton} onClick={onClear} disabled={!isPlaying}>

@@ -21,6 +21,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "bench": "tsx scripts/bench.ts",
+    "human-solver-stats": "tsx scripts/human-solver-stats.ts",
     "gen-vectors": "tsx scripts/gen-vectors.ts",
     "stats": "tsx scripts/stats.ts",
     "typecheck": "tsc --noEmit",

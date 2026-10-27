@@ -34,6 +34,7 @@ export default function SolverOpponentPanel() {
         grid={solverGrid}
         showWeights={state.showWeights}
         showPartialSums={state.showPartialSums}
+        showTargets
         legendText={state.showPartialSums ? 'Targets update as you play' : 'Line checks reveal on completion'}
         footerText="Weights guide each line."
         footerCode={`#${state.seed}`}
@@ -51,7 +52,17 @@ export default function SolverOpponentPanel() {
         </div>
         <div className={styles.status}>
           <span className={solver.finished ? styles.finishedDot : styles.thinkingDot} />
-          <span>{solver.finished ? `Finished in ${formatDuration(solver.elapsed)}` : 'Selecting a cell…'}</span>
+          <span>
+            {solver.finished
+              ? `Finished in ${formatDuration(solver.elapsed)}`
+              : solver.status === 'limited'
+                ? 'Needs more time to continue…'
+                : solver.status === 'stalled'
+                  ? 'Stuck on this position…'
+                  : solver.status === 'contradiction'
+                    ? 'Reconsidering…'
+                    : 'Selecting a cell…'}
+          </span>
         </div>
         {resultMessage && <p className={styles.result}>{resultMessage}</p>}
       </div>

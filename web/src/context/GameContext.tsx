@@ -11,7 +11,9 @@ export interface GameState {
   seed: number
   difficulty: Difficulty
   timed: boolean
+  timeLimitSeconds: number
   solverEnabled: boolean
+  displayName: string
   showWeights: boolean
   showPartialSums: boolean
   maxHints: number
@@ -25,7 +27,9 @@ export interface GameState {
   hintMessages: string[]
   attempts: number
   startTime: number
+  timerStarted: boolean
   endTime: number | null
+  endReason: 'solved' | 'gaveUp' | 'expired' | null
 }
 
 const initialState: GameState = {
@@ -34,7 +38,9 @@ const initialState: GameState = {
   seed: 0,
   difficulty: DEFAULT_SETTINGS.difficulty,
   timed: DEFAULT_SETTINGS.timed,
+  timeLimitSeconds: DEFAULT_SETTINGS.timeLimitSeconds,
   solverEnabled: DEFAULT_SETTINGS.solverEnabled,
+  displayName: DEFAULT_SETTINGS.displayName,
   showWeights: getDifficultyProfile(DEFAULT_SETTINGS.difficulty).showWeights,
   showPartialSums: getDifficultyProfile(DEFAULT_SETTINGS.difficulty).showPartialSums,
   maxHints: getDifficultyProfile(DEFAULT_SETTINGS.difficulty).maxHintsFor(3),
@@ -48,7 +54,9 @@ const initialState: GameState = {
   hintMessages: [],
   attempts: 0,
   startTime: 0,
+  timerStarted: false,
   endTime: null,
+  endReason: null,
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────
@@ -63,6 +71,8 @@ export type GameAction =
   | { type: 'CLEAR_GRID' }
   | { type: 'USE_HINT' }
   | { type: 'GIVE_UP' }
+  | { type: 'START_TIMER' }
+  | { type: 'TIME_EXPIRED' }
   | { type: 'RETURN_TO_START' }
 
 function initialGrid(puzzle: Puzzle, n: number): (number | null)[] {
@@ -98,7 +108,9 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         seed,
         difficulty: settings.difficulty,
         timed: settings.timed,
+        timeLimitSeconds: settings.timeLimitSeconds,
         solverEnabled: settings.solverEnabled,
+        displayName: settings.displayName,
         showWeights: profile.showWeights,
         showPartialSums: profile.showPartialSums,
         maxHints: profile.maxHintsFor(n),
@@ -107,12 +119,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         initialTilePool: pool,
         tilePool: [...pool],
         grid,
-        startTime: Date.now(),
+        startTime: settings.timed ? 0 : Date.now(),
+        timerStarted: !settings.timed,
       }
     }
 
     case 'SELECT_TILE': {
-      if (state.phase !== 'playing') return state
+      if (state.phase !== 'playing' || (state.timed && !state.timerStarted)) return state
 
       // Toggle: clicking the same tile deselects it.
       const next = action.digit === state.selectedTile ? null : action.digit
@@ -125,6 +138,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
       if (
         state.phase !== 'playing' ||
+        (state.timed && !state.timerStarted) ||
         selectedTile === null ||
         grid[cellIndex] !== null ||
         puzzle?.givens.has(cellIndex)
@@ -151,6 +165,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         attempts: state.attempts + 1,
         phase: won ? 'won' : state.phase,
         endTime: won ? Date.now() : state.endTime,
+        endReason: won ? 'solved' : state.endReason,
       }
     }
 
@@ -160,6 +175,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
       if (
         state.phase !== 'playing' ||
+        (state.timed && !state.timerStarted) ||
         puzzle?.givens.has(cellIndex) ||
         tilePool.indexOf(digit) === -1
       ) {
@@ -183,6 +199,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         attempts: state.attempts + 1,
         phase: won ? 'won' : state.phase,
         endTime: won ? Date.now() : state.endTime,
+        endReason: won ? 'solved' : state.endReason,
       }
     }
 
@@ -196,6 +213,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       // Dragging over a cell never changes the grid.
       if (
         state.phase !== 'playing' ||
+        (state.timed && !state.timerStarted) ||
         fromIndex === toIndex ||
         fromDigit === null ||
         toDigit === null ||
@@ -217,6 +235,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         attempts: state.attempts + 1,
         phase: won ? 'won' : state.phase,
         endTime: won ? Date.now() : state.endTime,
+        endReason: won ? 'solved' : state.endReason,
       }
     }
 
@@ -246,7 +265,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'CLEAR_GRID': {
-      if (state.phase !== 'playing' || !state.puzzle) return state
+      if (state.phase !== 'playing' || !state.puzzle || (state.timed && !state.timerStarted)) return state
 
       return {
         ...state,
@@ -260,7 +279,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const { puzzle, solution } = state
       const nextHint = state.hintsUsed + 1
 
-      if (state.phase !== 'playing' || !puzzle || !solution || nextHint > state.maxHints) {
+      if (state.phase !== 'playing' || (state.timed && !state.timerStarted) || !puzzle || !solution || nextHint > state.maxHints) {
         return state
       }
 
@@ -318,16 +337,32 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         hintMessages: [...state.hintMessages, message],
         phase: won ? 'won' : state.phase,
         endTime: won ? Date.now() : state.endTime,
+        endReason: won ? 'solved' : state.endReason,
       }
     }
 
     case 'GIVE_UP':
-      if (state.phase !== 'playing') return state
+      if (state.phase !== 'playing' || (state.timed && !state.timerStarted)) return state
       return {
         ...state,
         phase: 'gaveUp',
         selectedTile: null,
         endTime: Date.now(),
+        endReason: 'gaveUp',
+      }
+
+    case 'START_TIMER':
+      if (state.phase !== 'playing' || !state.timed || state.timerStarted) return state
+      return { ...state, timerStarted: true, startTime: Date.now() }
+
+    case 'TIME_EXPIRED':
+      if (state.phase !== 'playing' || !state.timed || !state.timerStarted) return state
+      return {
+        ...state,
+        phase: 'gaveUp',
+        selectedTile: null,
+        endTime: Date.now(),
+        endReason: 'expired',
       }
 
     case 'RETURN_TO_START':

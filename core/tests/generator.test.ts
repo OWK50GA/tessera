@@ -40,6 +40,20 @@ describe("generatePuzzle — determinism", () => {
     const changed = generatePuzzle(42, 3, changedWeights);
     expect(changed.puzzle.id).not.toEqual(standard.puzzle.id);
   });
+
+  it("applies dimension-specific givens without changing the solution", () => {
+    const withGivens: Config = {
+      ...DEFAULT_CONFIG,
+      givensBySize: { 2: 1, 3: 2, 4: 3 },
+    };
+    const generated = generatePuzzle(42, 3, withGivens);
+
+    expect(generated.puzzle.givens.size).toBe(2);
+    for (const [cellIndex, digit] of generated.puzzle.givens) {
+      expect(generated.solution[cellIndex]).toBe(digit);
+    }
+    expect(verify(generated.puzzle, generated.solution)).toBe(true);
+  });
 });
 
 // ── Uniqueness — one entry per supported N ────────────────────────────────────

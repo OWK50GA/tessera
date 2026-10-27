@@ -14,8 +14,9 @@ function parsePuzzleRoute(kind: 'play' | 'result', parts: string[], search: stri
   const seed = Number(parts[2])
   const params = new URLSearchParams(search)
   const requestedDifficulty = params.get('difficulty')
-  const difficulty: Difficulty = requestedDifficulty === 'standard' || requestedDifficulty === 'expert'
-    ? requestedDifficulty
+  const normalizedDifficulty = requestedDifficulty === 'standard' ? 'intermediate' : requestedDifficulty
+  const difficulty: Difficulty = normalizedDifficulty === 'beginner' || normalizedDifficulty === 'novice' || normalizedDifficulty === 'intermediate' || normalizedDifficulty === 'expert' || normalizedDifficulty === 'professional'
+    ? normalizedDifficulty
     : DEFAULT_SETTINGS.difficulty
   const legacyOpponent = params.get('opponent')
   const solverEnabled = params.get('solver') === '1' || (
@@ -34,7 +35,13 @@ function parsePuzzleRoute(kind: 'play' | 'result', parts: string[], search: stri
     kind,
     n,
     seed,
-    settings: { difficulty, timed: params.get('timer') === '1', solverEnabled },
+    settings: {
+      difficulty,
+      timed: params.get('timer') === '1',
+      timeLimitSeconds: Number(params.get('limit')) > 0 ? Number(params.get('limit')) : DEFAULT_SETTINGS.timeLimitSeconds,
+      solverEnabled,
+      displayName: DEFAULT_SETTINGS.displayName,
+    },
   }
 }
 
@@ -58,6 +65,7 @@ function settingsQuery(settings: GameSettings): string {
   const params = new URLSearchParams({
     difficulty: settings.difficulty,
     timer: settings.timed ? '1' : '0',
+    limit: String(settings.timeLimitSeconds),
     solver: settings.solverEnabled ? '1' : '0',
   })
   return `?${params.toString()}`

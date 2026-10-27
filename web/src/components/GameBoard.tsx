@@ -21,6 +21,8 @@ export default function GameBoard() {
     clearGrid,
     useHint,
     giveUp,
+    startTimer,
+    timeExpired,
     returnToStart,
   } = useGameActions()
   const { navigate } = useRouter()
@@ -35,16 +37,20 @@ export default function GameBoard() {
     hintMessages,
     difficulty,
     timed,
+    timeLimitSeconds,
+    timerStarted,
     showWeights,
     showPartialSums,
     startTime,
     endTime,
   } = state
   const dragDrop = useDragDrop(dropDigit, swapDigits)
-  const elapsed = useElapsedTime(startTime, endTime, timed && phase === 'playing')
+  const elapsed = useElapsedTime(startTime, endTime, timed && timerStarted && phase === 'playing')
+  const remaining = Math.max(0, timeLimitSeconds * 1000 - elapsed)
+  const showLineTargets = !timed || timerStarted
 
   useEffect(() => {
-    if (phase !== 'playing') return
+    if (phase !== 'playing' || (timed && !timerStarted)) return
 
     function warnBeforeUnload(event: BeforeUnloadEvent) {
       event.preventDefault()
@@ -53,7 +59,12 @@ export default function GameBoard() {
 
     window.addEventListener('beforeunload', warnBeforeUnload)
     return () => window.removeEventListener('beforeunload', warnBeforeUnload)
-  }, [phase])
+  }, [phase, timed, timerStarted])
+
+  useEffect(() => {
+    if (!timed || !timerStarted || phase !== 'playing' || remaining > 0) return
+    timeExpired()
+  }, [phase, remaining, timeExpired, timed, timerStarted])
 
   if (!puzzle) return null
 
@@ -70,7 +81,7 @@ export default function GameBoard() {
   }
 
   function handleReturnToStart() {
-    if (phase === 'playing' && !window.confirm('Leave this unfinished puzzle? Your current session will be cleared.')) {
+    if (phase === 'playing' && (!timed || timerStarted) && !window.confirm('Leave this unfinished puzzle? Your current session will be cleared.')) {
       return
     }
     returnToStart()
@@ -93,7 +104,7 @@ export default function GameBoard() {
             <span className={styles.puzzleLabel}>Puzzle / {n}×{n}</span>
             <span className={styles.difficulty}>{difficulty}</span>
             <span className={styles.seed}>Seed {seed}</span>
-            {timed && <span className={styles.timer}>Time {formatDuration(elapsed)}</span>}
+            {timed && timerStarted && <span className={styles.timer}>Time {formatDuration(remaining)} left</span>}
             <span className={`${styles.phase} ${phase === 'won' ? styles.phaseWon : ''}`}>
             {phase === 'won' ? 'Solved' : 'In progress'}
           </span>
@@ -124,15 +135,16 @@ export default function GameBoard() {
 
           <div className={`${styles.versusBoards} ${state.solverEnabled ? '' : styles.singleBoard} ${state.solverEnabled && n >= 4 ? styles.versusBoardsStacked : ''}`}>
             <div className={styles.playerBoard}>
-              {state.solverEnabled && <p className={styles.boardLabel}>Your grid</p>}
+              {state.solverEnabled && <p className={styles.boardLabel}>{state.displayName}'s grid</p>}
               <PuzzleGrid
                 puzzle={puzzle}
                 grid={grid}
                 showWeights={showWeights}
                 showPartialSums={showPartialSums}
-                legendText={showPartialSums ? 'Targets update as you play' : 'Line checks reveal on completion'}
+                legendText={!showLineTargets ? 'Targets unlock when the timer starts' : showPartialSums ? 'Targets update as you play' : 'Line checks reveal on completion'}
                 footerText="Weights guide each line."
                 footerCode={`#${seed}`}
+                showTargets={showLineTargets}
                 selectedTile={selectedTile}
                 draggedDigit={dragDrop.draggedDigit}
                 draggedCellIndex={dragDrop.draggedCellIndex}
@@ -175,6 +187,10 @@ export default function GameBoard() {
             onClear={clearGrid}
             onHint={useHint}
             onGiveUp={giveUp}
+            timed={timed}
+            timerStarted={timerStarted}
+            timeLimitSeconds={timeLimitSeconds}
+            onStartTimer={startTimer}
             onReturnToStart={handleReturnToStart}
           />
 

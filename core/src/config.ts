@@ -23,6 +23,9 @@ export interface Config {
    */
   defaultGivens: number;
 
+  /** Optional per-size override for difficulty profiles. */
+  givensBySize?: Record<number, number>;
+
   /**
    * Maximum number of generation retries before the generator throws.
    * Keeps the generator from looping forever on weight configs that

@@ -176,8 +176,14 @@
 .toggleRow input:checked + .toggle { background: var(--amber-soft); }
 .toggleRow input:checked + .toggle span { background: var(--amber); transform: translateX(1.25rem); }
 .toggleRow input:focus-visible + .toggle { outline: 3px solid var(--amber); outline-offset: 3px; }
+.limitField { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 0.75rem; color: var(--muted); font-size: 0.7rem; }
+.limitField select { padding: 0.65rem 0.75rem; border: 1px solid var(--line-strong); border-radius: 0.5rem; color: var(--ink); background: var(--surface-raised); }
 
 .localNote { margin: 0.75rem 0 0; color: var(--muted-soft); font-size: 0.68rem; }
+
+.nameField { display: grid; gap: 0.7rem; color: var(--muted); font-size: 0.7rem; }
+.nameField input { width: min(100%, 24rem); padding: 0.75rem 0.8rem; border: 1px solid var(--line-strong); border-radius: 0.55rem; outline: none; color: var(--ink); background: var(--surface); }
+.nameField input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px var(--amber-soft); }
 
 .footer {
   display: flex;

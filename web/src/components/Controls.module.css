@@ -27,6 +27,13 @@
   font-size: 0.62rem;
 }
 
+.timerGate { margin-bottom: 0.85rem; padding: 0.75rem; border: 1px solid rgba(240, 161, 91, 0.28); border-radius: 0.65rem; background: rgba(51, 39, 31, 0.45); }
+.timerGate p { margin: 0 0 0.65rem; color: #e7d8c8; font-size: 0.68rem; line-height: 1.4; }
+.startTimer { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0.7rem 0.75rem; border: 1px solid var(--amber); border-radius: 0.5rem; color: #1a2024; background: var(--amber); cursor: pointer; font-size: 0.72rem; font-weight: 800; }
+.startTimer span { font: 0.62rem ui-monospace, SFMono-Regular, Menlo, monospace; }
+.startTimer:hover, .startTimer:focus-visible { background: #ffc184; }
+.startTimer:focus-visible { outline: 3px solid var(--amber-soft); outline-offset: 2px; }
+
 .actions {
   display: grid;
   gap: 0.45rem;

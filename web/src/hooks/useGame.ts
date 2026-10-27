@@ -45,6 +45,14 @@ export function useGameActions() {
     dispatch({ type: 'GIVE_UP' })
   }
 
+  function startTimer() {
+    dispatch({ type: 'START_TIMER' })
+  }
+
+  function timeExpired() {
+    dispatch({ type: 'TIME_EXPIRED' })
+  }
+
   function returnToStart() {
     dispatch({ type: 'RETURN_TO_START' })
   }
@@ -60,6 +68,8 @@ export function useGameActions() {
     clearGrid,
     useHint,
     giveUp,
+    startTimer,
+    timeExpired,
     returnToStart,
   }
 }

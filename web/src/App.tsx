@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { GameProvider, useGameContext } from './context/GameContext'
 import { useGameActions } from './hooks/useGame'
 import { playPath, resultPath, useRouter } from './hooks/useRouter'
+import { loadSettings } from './settings'
 import StartScreen from './components/StartScreen'
 import GameBoard from './components/GameBoard'
 import NotFoundScreen from './components/NotFoundScreen'
@@ -22,12 +23,13 @@ function AppInner() {
       state.seed === route.seed &&
       state.difficulty === route.settings.difficulty &&
       state.timed === route.settings.timed &&
+      state.timeLimitSeconds === route.settings.timeLimitSeconds &&
       state.solverEnabled === route.settings.solverEnabled
 
     // Deep links can start a puzzle directly, even when the app was opened at
     // /play/:n/:seed instead of through the introduction screen.
     if (!isCurrentPuzzle) {
-      startGame(route.n, route.seed, route.settings)
+      startGame(route.n, route.seed, { ...route.settings, displayName: loadSettings().displayName })
       return
     }
 
@@ -35,7 +37,9 @@ function AppInner() {
       navigate(resultPath(route.n, route.seed, {
         difficulty: state.difficulty,
         timed: state.timed,
+        timeLimitSeconds: state.timeLimitSeconds,
         solverEnabled: state.solverEnabled,
+        displayName: state.displayName,
       }), true)
     }
 
@@ -43,7 +47,9 @@ function AppInner() {
       navigate(playPath(route.n, route.seed, {
         difficulty: state.difficulty,
         timed: state.timed,
+        timeLimitSeconds: state.timeLimitSeconds,
         solverEnabled: state.solverEnabled,
+        displayName: state.displayName,
       }), true)
     }
   }, [navigate, route, startGame, state.difficulty, state.n, state.phase, state.puzzle, state.seed, state.solverEnabled, state.timed])
