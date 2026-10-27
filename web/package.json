@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "build:core": "node ./scripts/build-core.mjs",
+    "predev": "pnpm run build:core",
     "dev": "vite",
+    "prebuild": "pnpm run build:core",
     "build": "tsc -b && vite build",
     "typecheck": "tsc --noEmit"
   },

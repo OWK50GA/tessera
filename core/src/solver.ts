@@ -192,11 +192,13 @@ export function countSolutions(puzzle: Puzzle, limit: number): SolverResult {
       // ── Row pruning ──────────────────────────────────────────────────────
       let pruned = false;
       if (col === n - 1) {
-        let rowSum = 0;
-        for (let c2 = 0; c2 < n; c2++) {
-          rowSum += (grid[row * n + c2] ?? 0) * (rowWeights[c2] ?? 0);
+        const rowDigits = Array.from(
+          { length: n },
+          (_, c2) => grid[row * n + c2] as number,
+        );
+        if (lineValue(rowDigits, rowWeights) !== (rowTargets[row] ?? 0)) {
+          pruned = true;
         }
-        if (rowSum !== (rowTargets[row] ?? 0)) pruned = true;
       }
 
       // ── Column pruning ───────────────────────────────────────────────────

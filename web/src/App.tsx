@@ -19,7 +19,10 @@ function AppInner() {
     const isCurrentPuzzle =
       state.puzzle !== null &&
       state.n === route.n &&
-      state.seed === route.seed
+      state.seed === route.seed &&
+      state.difficulty === route.settings.difficulty &&
+      state.timed === route.settings.timed &&
+      state.solverEnabled === route.settings.solverEnabled
 
     // Deep links can start a puzzle directly, even when the app was opened at
     // /play/:n/:seed instead of through the introduction screen.
@@ -37,9 +40,13 @@ function AppInner() {
     }
 
     if (route.kind === 'result' && state.phase === 'playing') {
-      navigate(playPath(route.n, route.seed), true)
+      navigate(playPath(route.n, route.seed, {
+        difficulty: state.difficulty,
+        timed: state.timed,
+        solverEnabled: state.solverEnabled,
+      }), true)
     }
-  }, [navigate, route, startGame, state.n, state.phase, state.puzzle, state.seed])
+  }, [navigate, route, startGame, state.difficulty, state.n, state.phase, state.puzzle, state.seed, state.solverEnabled, state.timed])
 
   if (route.kind === 'home') return <StartScreen />
   if (route.kind === 'settings') return <SettingsScreen />

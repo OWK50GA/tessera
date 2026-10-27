@@ -10,8 +10,8 @@
 // The tile pool is shuffled with a separate PRNG seeded by poolSeed(currentSeed)
 // so the pool order shown to the player always differs from the solution order.
 //
-// The puzzle id is derived deterministically from (currentSeed, n) so the same
-// (seed, n, config) triple always produces the same puzzle.
+// The puzzle id is derived from canonical puzzle content so identical puzzle
+// rules and targets receive the same id regardless of how they were generated.
 
 import { DEFAULT_CONFIG, type Config } from "./config.js";
 import { lineValue } from "./combine.js";
@@ -22,14 +22,49 @@ import type { GeneratedPuzzle, Puzzle, PuzzleId } from "./types.js";
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /**
- * Derive a stable 8-byte puzzle id from a seed and grid size.
- * Layout: seed as 4 bytes LE | n as 1 byte | 3 zero bytes.
+ * Derive a stable 8-byte id from canonical puzzle content.
+ *
+ * FNV-1a is used here as a small deterministic content hash. The canonical
+ * stream includes array lengths, weights, targets, and sorted givens, so
+ * different rules cannot share an id merely because they share a seed.
  */
-function derivePuzzleId(seed: number, n: number): PuzzleId {
+function derivePuzzleId(puzzle: Omit<Puzzle, "id">): PuzzleId {
+  const offset = 0xcbf29ce484222325n;
+  const prime = 0x100000001b3n;
+  let hash = offset;
+
+  function byte(value: number): void {
+    hash = BigInt.asUintN(64, (hash ^ BigInt(value & 0xff)) * prime);
+  }
+
+  function u32(value: number): void {
+    const normalized = value >>> 0;
+    byte(normalized);
+    byte(normalized >>> 8);
+    byte(normalized >>> 16);
+    byte(normalized >>> 24);
+  }
+
+  function array(values: number[]): void {
+    u32(values.length);
+    for (const value of values) u32(value);
+  }
+
+  u32(puzzle.n);
+  array(puzzle.rowWeights);
+  array(puzzle.colWeights);
+  array(puzzle.rowTargets);
+  array(puzzle.colTargets);
+
+  const givens = [...puzzle.givens.entries()].sort(([a], [b]) => a - b);
+  u32(givens.length);
+  for (const [cellIndex, digit] of givens) {
+    u32(cellIndex);
+    u32(digit);
+  }
+
   const id = new Uint8Array(8);
-  const view = new DataView(id.buffer);
-  view.setUint32(0, seed >>> 0, true /* LE */);
-  id[4] = n;
+  new DataView(id.buffer).setBigUint64(0, hash, false /* canonical big-endian */);
   return id;
 }
 
@@ -80,7 +115,7 @@ export function generatePuzzle(
     );
 
     const puzzle: Puzzle = {
-      id: derivePuzzleId(currentSeed, n),
+      id: new Uint8Array(8),
       n,
       rowWeights,
       colWeights,
@@ -88,6 +123,7 @@ export function generatePuzzle(
       colTargets,
       givens: new Map(),
     };
+    puzzle.id = derivePuzzleId(puzzle);
 
     // 3. Uniqueness check.
     const { count } = countSolutions(puzzle, 2);

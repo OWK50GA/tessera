@@ -154,6 +154,7 @@
 .cardDetails { margin-top: auto; padding-top: 1rem; color: var(--muted-soft); font-size: 0.62rem; line-height: 1.6; }
 
 .toggleRow {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -174,40 +175,8 @@
 .toggle span { display: block; width: 1.15rem; height: 1.15rem; border-radius: 50%; background: var(--muted); transition: transform 160ms ease, background 160ms ease; }
 .toggleRow input:checked + .toggle { background: var(--amber-soft); }
 .toggleRow input:checked + .toggle span { background: var(--amber); transform: translateX(1.25rem); }
+.toggleRow input:focus-visible + .toggle { outline: 3px solid var(--amber); outline-offset: 3px; }
 
-.opponentGrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.55rem;
-}
-
-.opponentOption {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  min-height: 6.3rem;
-  padding: 0.85rem;
-  border: 1px solid var(--line);
-  border-radius: 0.65rem;
-  color: var(--muted);
-  background: var(--surface);
-  text-align: left;
-  cursor: pointer;
-  font-size: 0.65rem;
-  line-height: 1.4;
-  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
-}
-
-.opponentOption:hover,
-.opponentOption:focus-visible,
-.opponentOption.active {
-  border-color: var(--amber);
-  color: var(--ink);
-  background: var(--surface-bright);
-}
-
-.opponentOption:focus-visible { outline: 3px solid var(--amber-soft); outline-offset: 3px; }
-.opponentName { margin-bottom: 0.45rem; color: var(--ink); font-size: 0.75rem; font-weight: 800; }
 .localNote { margin: 0.75rem 0 0; color: var(--muted-soft); font-size: 0.68rem; }
 
 .footer {
@@ -227,7 +196,6 @@
   .difficultyGrid { grid-template-columns: 1fr; }
   .difficultyCard { min-height: auto; }
   .cardTitle { margin-top: 1rem; }
-  .opponentGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 480px) {

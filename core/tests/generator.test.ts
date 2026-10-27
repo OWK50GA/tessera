@@ -15,6 +15,7 @@ describe("generatePuzzle — determinism", () => {
     const b = generatePuzzle(42, 3, DEFAULT_CONFIG);
     expect(a.puzzle.rowTargets).toEqual(b.puzzle.rowTargets);
     expect(a.puzzle.colTargets).toEqual(b.puzzle.colTargets);
+    expect(a.puzzle.id).toEqual(b.puzzle.id);
     expect(a.solution).toEqual(b.solution);
     expect(a.tilePool).toEqual(b.tilePool);
   });
@@ -27,6 +28,17 @@ describe("generatePuzzle — determinism", () => {
       a.puzzle.rowTargets.every((v, i) => v === b.puzzle.rowTargets[i]) &&
       a.puzzle.colTargets.every((v, i) => v === b.puzzle.colTargets[i]);
     expect(sameTargets).toBe(false);
+  });
+
+  it("derives a different id when the puzzle weights change", () => {
+    const changedWeights: Config = {
+      ...DEFAULT_CONFIG,
+      rowWeights: { ...DEFAULT_CONFIG.rowWeights, 3: [2, 1, 3] },
+      colWeights: { ...DEFAULT_CONFIG.colWeights, 3: [2, 1, 3] },
+    };
+    const standard = generatePuzzle(42, 3, DEFAULT_CONFIG);
+    const changed = generatePuzzle(42, 3, changedWeights);
+    expect(changed.puzzle.id).not.toEqual(standard.puzzle.id);
   });
 });
 

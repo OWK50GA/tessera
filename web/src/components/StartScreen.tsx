@@ -9,7 +9,7 @@ export default function StartScreen() {
 
   function handleStart(n: number) {
     const num = Number(seedInput.trim())
-    const seed = seedInput.trim() !== '' && Number.isInteger(num) && num >= 0 ? num : undefined
+    const seed = seedInput.trim() !== '' && Number.isSafeInteger(num) && num >= 0 ? num : undefined
     const resolvedSeed = seed ?? Math.floor(Math.random() * 0xFFFFFFFF)
     navigate(playPath(n, resolvedSeed, loadSettings()))
   }

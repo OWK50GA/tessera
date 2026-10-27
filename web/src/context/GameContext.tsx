@@ -289,6 +289,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           const col = (cellIndex % state.n) + 1
 
           nextGrid = [...state.grid]
+          if (poolIndex === -1) {
+            const existingIndex = nextGrid.findIndex(
+              (value, index) => value === answer && !puzzle.givens.has(index),
+            )
+            if (existingIndex === -1) return state
+            nextGrid[existingIndex] = null
+          }
           nextGrid[cellIndex] = answer
           nextPool = [...state.tilePool]
           if (poolIndex !== -1) nextPool.splice(poolIndex, 1)
