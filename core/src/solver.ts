@@ -13,18 +13,21 @@
 //   Key implementation choices:
 //   - Per-column candidate bitmasks (one 32-bit int per column).
 //     Digits 1..N² map to bit positions 1..N².  For N≤4 total≤16, so all
-//     candidates fit in a single uint32.  Set/clear/count are single-cycle
-//     operations; extracting the k-th set bit is a fast bit-scan loop.
+//     candidates fit in a single int32.  Set/clear are single-cycle operations;
+//     iterating set bits uses the standard lsb-isolation trick.
 //   - Global available bitmask — mirrors colCandidates for the whole board.
 //   - Incremental column partial sums (Float64Array).
-//   - Pre-sorted weight arrays per column (Int32Array, descending).
+//   - Pre-sorted weight arrays per column (descending).
 //   - Zero heap allocation in the hot path.
 //   - Row sum computed inline.
-//   - Cross-column feasibility check: when d is removed as a candidate from
-//     all columns, any column that was already tight may become infeasible.
+//   - Cross-column feasibility check: when d is placed, it is removed from
+//     all column candidate sets, potentially making other columns infeasible.
+//   - Leaf validation: when all cells are filled, every row sum is verified
+//     (catches rows whose last cell was a given and never hit the mid-search
+//     row-prune check).
 //
 // lineValue is imported from combine.ts (swappability contract) and used only
-// for the row-sum check at the end of each row.
+// for the leaf-node row validation.
 
 import { lineValue } from "./combine.js";
 import type { Puzzle } from "./types.js";
@@ -58,7 +61,6 @@ export function countSolutions(puzzle: Puzzle, limit: number): SolverResult {
   for (let d = 1; d <= total; d++) availMask |= (1 << d);
 
   // colMask[c]: bitmask of digits still available to column c.
-  // Initially equals availMask for every column.
   const colMask = new Int32Array(n).fill(availMask);
 
   // Working grid — 0 means empty.
@@ -80,7 +82,7 @@ export function countSolutions(puzzle: Puzzle, limit: number): SolverResult {
     for (let i = 0; i < n; i++) colWeightOrder[c * n + i] = rows[i] ?? 0;
   }
 
-  // Scratch buffers for colFeasible — reused every call, never reallocated.
+  // Scratch buffers for colFeasible — allocated once, reused every call.
   const digBuf = new Int32Array(total + 1); // candidate digits, ascending
   const wBuf   = new Float64Array(n);       // unfilled row weights, desc
 
@@ -90,39 +92,35 @@ export function countSolutions(puzzle: Puzzle, limit: number): SolverResult {
     const c = cellIndex % n;
     grid[cellIndex] = digit;
     availMask &= ~(1 << digit);
-    colPartial[c] += digit * (colWeights[r] ?? 0);
-    colRowsFilled[c]++;
-    for (let c2 = 0; c2 < n; c2++) colMask[c2] &= ~(1 << digit);
+    colPartial[c]    = (colPartial[c] ?? 0) + digit * (colWeights[r] ?? 0);
+    colRowsFilled[c] = (colRowsFilled[c] ?? 0) + 1;
+    for (let c2 = 0; c2 < n; c2++) colMask[c2] = (colMask[c2] ?? 0) & ~(1 << digit);
   }
 
   let count = 0;
   let nodes = 0;
 
   // ── Column feasibility ──────────────────────────────────────────────────────
-  //
-  // Can column c still reach its target?
-  // Uses the per-column candidate bitmask and scratch buffers.
+
   function colFeasible(c: number): boolean {
     const target  = colTargets[c] ?? 0;
-    const partial = colPartial[c];
-    const k       = n - colRowsFilled[c]; // rows still to fill
+    const partial = colPartial[c] ?? 0;
+    const k       = n - (colRowsFilled[c] ?? 0); // rows still to fill
 
     if (k === 0) return partial === target;
 
     // Extract candidates from colMask[c] into digBuf, ascending.
-    let mask = colMask[c]!;
+    let mask = colMask[c] ?? 0;
     let found = 0;
     while (mask !== 0) {
-      const lsb  = mask & (-mask);
-      const d    = 31 - Math.clz32(lsb); // bit position
-      digBuf[found++] = d;
+      const lsb = mask & (-mask);
+      digBuf[found++] = 31 - Math.clz32(lsb); // bit position = digit value
       mask &= mask - 1;
     }
 
     if (found < k) return false;
 
     // Collect weights of unfilled rows for column c, descending.
-    // colWeightOrder[c] is already sorted desc — walk it, skip filled rows.
     let wi = 0;
     for (let i = 0; i < n && wi < k; i++) {
       const r = colWeightOrder[c * n + i] ?? 0;
@@ -131,16 +129,14 @@ export function countSolutions(puzzle: Puzzle, limit: number): SolverResult {
       }
     }
 
-    // Bounds:
-    //   min = k smallest candidates × k largest weights
-    //   max = k largest candidates  × k largest weights
-    // digBuf is ascending, wBuf is descending (largest weight first).
+    // min = k smallest candidates × k largest weights
+    // max = k largest candidates  × k largest weights
     let minSum = 0;
     let maxSum = 0;
     for (let i = 0; i < k; i++) {
       const w = wBuf[i] ?? 0;
-      minSum += (digBuf[i]           ?? 0) * w; // small digit × large weight
-      maxSum += (digBuf[found-1-i]   ?? 0) * w; // large digit × large weight
+      minSum += (digBuf[i]         ?? 0) * w;
+      maxSum += (digBuf[found-1-i] ?? 0) * w;
     }
 
     return partial + minSum <= target && target <= partial + maxSum;
@@ -154,6 +150,13 @@ export function countSolutions(puzzle: Puzzle, limit: number): SolverResult {
     while (cellIndex < total && puzzle.givens.has(cellIndex)) cellIndex++;
 
     if (cellIndex === total) {
+      // Leaf node: verify all row sums. This catches rows whose last cell was
+      // a given and therefore never passed through the mid-search row-prune
+      // check, as well as rows that are entirely given.
+      for (let r = 0; r < n; r++) {
+        const rowDigits = Array.from({ length: n }, (_, c) => grid[r * n + c] as number);
+        if (lineValue(rowDigits, rowWeights) !== (rowTargets[r] ?? 0)) return false;
+      }
       count++;
       return count >= limit;
     }
@@ -164,25 +167,25 @@ export function countSolutions(puzzle: Puzzle, limit: number): SolverResult {
     const col  = cellIndex % n;
     const colW = colWeights[row] ?? 0;
 
-    // Iterate over available digits via bitmask — no branch per unavailable digit.
+    // Iterate over available digits via bitmask.
     let tryMask = availMask;
     while (tryMask !== 0) {
       const lsb = tryMask & (-tryMask);
-      const d   = 31 - Math.clz32(lsb); // bit position of lowest set bit
+      const d   = 31 - Math.clz32(lsb);
       tryMask  &= tryMask - 1;
 
       // Place d.
-      grid[cellIndex]   = d;
-      availMask        &= ~(1 << d);
-      colPartial[col]  += d * colW;
-      colRowsFilled[col]++;
+      grid[cellIndex]    = d;
+      availMask         &= ~(1 << d);
+      colPartial[col]    = (colPartial[col] ?? 0) + d * colW;
+      colRowsFilled[col] = (colRowsFilled[col] ?? 0) + 1;
 
-      // Remove d from all column candidate masks and track which were cleared.
-      let clearedMask = 0; // bit c set = colMask[c] had bit d set before
+      // Remove d from all column candidate masks; track which were cleared.
+      let clearedMask = 0;
       for (let c2 = 0; c2 < n; c2++) {
-        if ((colMask[c2]! & (1 << d)) !== 0) {
-          colMask[c2]  &= ~(1 << d);
-          clearedMask  |= (1 << c2);
+        if (((colMask[c2] ?? 0) & (1 << d)) !== 0) {
+          colMask[c2]  = (colMask[c2] ?? 0) & ~(1 << d);
+          clearedMask |= (1 << c2);
         }
       }
 
@@ -204,25 +207,28 @@ export function countSolutions(puzzle: Puzzle, limit: number): SolverResult {
       }
 
       if (!pruned && backtrack(cellIndex + 1)) {
-        // Early-stop path — restore and propagate.
-        colRowsFilled[col]--;
-        colPartial[col]  -= d * colW;
-        availMask        |= (1 << d);
-        grid[cellIndex]   = 0;
-        // Restore only the columns we actually cleared.
+        // Early-stop: restore and propagate.
+        colRowsFilled[col] = (colRowsFilled[col] ?? 0) - 1;
+        colPartial[col]    = (colPartial[col] ?? 0) - d * colW;
+        availMask         |= (1 << d);
+        grid[cellIndex]    = 0;
         for (let c2 = 0; c2 < n; c2++) {
-          if ((clearedMask & (1 << c2)) !== 0) colMask[c2] |= (1 << d);
+          if ((clearedMask & (1 << c2)) !== 0) {
+            colMask[c2] = (colMask[c2] ?? 0) | (1 << d);
+          }
         }
         return true;
       }
 
       // Unplace d.
-      colRowsFilled[col]--;
-      colPartial[col]  -= d * colW;
-      availMask        |= (1 << d);
-      grid[cellIndex]   = 0;
+      colRowsFilled[col] = (colRowsFilled[col] ?? 0) - 1;
+      colPartial[col]    = (colPartial[col] ?? 0) - d * colW;
+      availMask         |= (1 << d);
+      grid[cellIndex]    = 0;
       for (let c2 = 0; c2 < n; c2++) {
-        if ((clearedMask & (1 << c2)) !== 0) colMask[c2] |= (1 << d);
+        if ((clearedMask & (1 << c2)) !== 0) {
+          colMask[c2] = (colMask[c2] ?? 0) | (1 << d);
+        }
       }
     }
 

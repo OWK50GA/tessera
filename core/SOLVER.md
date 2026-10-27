@@ -145,8 +145,8 @@ all column candidate sets.
 | Solve time | 2,463 ms | 6,553 ms |
 | Nodes | 2,459,425 | 7,988,253 |
 
-6× faster than iteration 0. Mean cleared the 5 s target; one outlier still hit
-6.5 s.
+About 4× faster than iteration 0 (10,139 ms → 2,463 ms). Mean cleared the 5 s
+target; one outlier still hit 6.5 s.
 
 ---
 
@@ -240,14 +240,16 @@ real-time loop.
 
 ## Potential further improvements
 
-If N=5 support is ever added (25 cells, digits 1–25), the 32-bit bitmask would
-overflow. Options:
+If N≥6 support is ever added (total ≥ 36), the 32-bit bitmask overflows
+(`1 << 36` is undefined behaviour in JavaScript). N=5 (total = 25, bits 1–25)
+still fits within a signed int32. Options for N≥6:
 
 - Use a `BigInt` mask — simpler but slower.
-- Use two 32-bit integers per column (bits 1–16 in one, 17–25 in the other).
+- Use two 32-bit integers per column (bits 1–25 in one word for N=5, extending
+  as needed for larger N).
 - Switch to a typed-array bitset with explicit word indexing.
 
-For N≤4 the current implementation is sufficient.
+For N≤5 the current implementation is sufficient (bits 1–25 fit in int32).
 
 A more aggressive approach — **arc consistency (AC-3)** — would propagate
 constraints further before branching, potentially reducing the node count for
