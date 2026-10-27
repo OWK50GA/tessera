@@ -1,33 +1,57 @@
 .clue {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  font-size: 0.75rem;
-  gap: 2px;
-  padding: 4px;
-  min-width: 60px;
-  min-height: 60px;
+  gap: 0.2rem;
+  width: clamp(4.5rem, 9vw, 6.5rem);
+  min-height: clamp(2.25rem, 6vw, 4.25rem);
+  padding: 0.35rem 0.15rem;
+  border-left: 2px solid var(--line);
 }
 
 .target {
-  font-weight: 600;
-  font-size: 0.8rem;
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: clamp(0.78rem, 1.5vw, 0.95rem);
+  font-weight: 800;
+}
+
+.target::before {
+  color: var(--muted-soft);
+  content: '= ';
+}
+
+.partial,
+.match,
+.mismatch {
+  font-size: clamp(0.56rem, 1.15vw, 0.68rem);
+  letter-spacing: 0.02em;
 }
 
 .partial {
-  color: #777;
-  font-size: 0.7rem;
+  color: var(--muted-soft);
+}
+
+.matchState {
+  border-left-color: var(--teal);
 }
 
 .match {
-  color: #16a34a;
-  font-size: 1.2rem;
-  font-weight: 700;
+  color: var(--teal);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.mismatchState {
+  border-left-color: var(--danger);
 }
 
 .mismatch {
-  color: #dc2626;
-  font-size: 1.2rem;
-  font-weight: 700;
+  color: var(--danger);
+  font-weight: 800;
+}
+
+.incompleteState {
+  border-left-color: rgba(240, 161, 91, 0.7);
 }

@@ -1,0 +1,1 @@
+{"root":["./src/App.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/ClueBox.tsx","./src/components/DigitPool.tsx","./src/components/DigitTile.tsx","./src/components/GameBoard.tsx","./src/components/GridCell.tsx","./src/components/StartScreen.tsx","./src/context/GameContext.tsx","./src/hooks/useGame.ts"],"version":"5.9.3"}
