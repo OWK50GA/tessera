@@ -8,9 +8,7 @@
 .topbar { display: flex; align-items: center; justify-content: space-between; padding-bottom: 1.5rem; border-bottom: 1px solid var(--line); }
 .brand, .nav button, .footer button { border: 0; background: transparent; cursor: pointer; }
 .brand { display: inline-flex; align-items: center; gap: 0.6rem; padding: 0; color: var(--ink); font-size: 0.85rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
-.brandMark { display: grid; grid-template-columns: repeat(2, 0.35rem); grid-template-rows: repeat(2, 0.35rem); gap: 0.12rem; width: 0.82rem; height: 0.82rem; transform: rotate(45deg); }
-.brandMark span { background: var(--amber); }
-.brandMark span:nth-child(2), .brandMark span:nth-child(3) { background: var(--teal); }
+.brandMark { display: block; flex: 0 0 auto; width: 1.18rem; height: 1.18rem; }
 .nav { display: flex; gap: 1rem; }
 .nav button, .footer button { color: var(--muted); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; }
 .nav button:hover, .nav button:focus-visible, .footer button:hover, .footer button:focus-visible { color: var(--amber); }

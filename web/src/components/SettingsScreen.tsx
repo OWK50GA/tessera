@@ -35,7 +35,7 @@ export default function SettingsScreen() {
     <div className={styles.page}>
       <header className={styles.topbar}>
         <button className={styles.brand} onClick={() => navigateWithSavedTimeLimit('/')}>
-          <span className={styles.brandMark} aria-hidden="true"><span /><span /><span /></span>
+          <img className={styles.brandMark} src="/tessera-mark.svg" alt="" aria-hidden="true" />
           Tessera
         </button>
         <nav className={styles.nav} aria-label="Settings navigation">

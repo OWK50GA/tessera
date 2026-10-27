@@ -19,11 +19,7 @@ export default function StartScreen() {
     <div className={styles.container}>
       <header className={styles.topbar}>
         <div className={styles.brand}>
-          <span className={styles.brandMark} aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </span>
+          <img className={styles.brandMark} src="/tessera-mark.svg" alt="" aria-hidden="true" />
           <span>Tessera</span>
         </div>
         <nav className={styles.topbarLinks} aria-label="Site navigation">

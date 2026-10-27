@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title">
+  <title id="title">Tessera mark</title>
+  <rect width="96" height="96" rx="24" fill="#0d141b"/>
+  <rect x="12" y="12" width="72" height="72" rx="18" fill="#15232d" stroke="#334653" stroke-width="2"/>
+
+  <g fill="#f0a15b">
+    <rect x="20" y="20" width="16" height="16" rx="4"/>
+    <rect x="40" y="20" width="16" height="16" rx="4" fill="#ffc184"/>
+    <rect x="60" y="20" width="16" height="16" rx="4"/>
+  </g>
+
+  <g fill="#68c3a2">
+    <rect x="40" y="40" width="16" height="16" rx="4"/>
+    <rect x="40" y="60" width="16" height="16" rx="4" fill="#8be0bd"/>
+  </g>
+</svg>

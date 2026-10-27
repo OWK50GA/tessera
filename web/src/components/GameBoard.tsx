@@ -127,11 +127,7 @@ export default function GameBoard() {
       {(!timeExpiredState || showFailureTransition) && <div className={`${styles.playFrame} ${showFailureTransition ? styles.failurePlayFrame : ''}`}>
       <header className={styles.topbar}>
         <div className={styles.brand}>
-          <span className={styles.brandMark} aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </span>
+          <img className={styles.brandMark} src="/tessera-mark.svg" alt="" aria-hidden="true" />
           <span>Tessera</span>
         </div>
 
