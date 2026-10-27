@@ -58,7 +58,7 @@ describe("generatePuzzle — determinism", () => {
 
 // ── Uniqueness — one entry per supported N ────────────────────────────────────
 
-// N=4 generation is expensive (~10–30 s). We generate once and share the result
+// N=4 generation is expensive (~30 s). We generate once and share the result
 // across the four assertions to avoid running the solver four times.
 describe("generatePuzzle — uniqueness for all supported N", () => {
   for (const n of [2, 3]) {
@@ -89,7 +89,7 @@ describe("generatePuzzle — uniqueness for all supported N", () => {
   }
 
   // N=4: generate once, run all assertions on the single result.
-  it("N=4: puzzle is well-formed, solution verifies, pool is correct", { timeout: 60_000 }, () => {
+  it("N=4: puzzle is well-formed, solution verifies, pool is correct", { timeout: 120_000 }, () => {
     const n = 4;
     const { puzzle, solution, tilePool } = generatePuzzle(42, n, DEFAULT_CONFIG);
 

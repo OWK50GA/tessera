@@ -72,6 +72,12 @@ export function countSolutions(puzzle: Puzzle, limit: number): SolverResult {
   // colRowsFilled[c] — rows already committed in column c.
   const colRowsFilled = new Int32Array(n);
 
+  // rowPartial[r] and rowCellsFilled[r] mirror the incremental column state
+  // so partial row targets can be rejected before the row is complete.
+  const rowPartial = new Float64Array(n);
+  const rowCellsFilled = new Int32Array(n);
+  const rowUsedMask = new Int32Array(n);
+
   // Pre-sort row indices for each column by colWeight descending.
   // colWeightOrder[c * n + i] = row index of the (i+1)-th heaviest row for col c.
   const colWeightOrder = new Int32Array(n * n);
@@ -81,6 +87,22 @@ export function countSolutions(puzzle: Puzzle, limit: number): SolverResult {
     );
     for (let i = 0; i < n; i++) colWeightOrder[c * n + i] = rows[i] ?? 0;
   }
+
+  // Pre-sort column indices for each row by rowWeight descending.
+  const rowWeightOrder = new Int32Array(n * n);
+  for (let r = 0; r < n; r++) {
+    const columns = Array.from({ length: n }, (_, c) => c).sort(
+      (a, b) => (rowWeights[b] ?? 0) - (rowWeights[a] ?? 0),
+    );
+    for (let i = 0; i < n; i++) rowWeightOrder[r * n + i] = columns[i] ?? 0;
+  }
+
+  const rowOpenColumns = Array.from({ length: n }, (_, r) =>
+    Array.from({ length: n }, (_, c) => c).filter(
+      (c) => !puzzle.givens.has(r * n + c),
+    ),
+  );
+  const rowGivenCounts = rowOpenColumns.map((columns) => n - columns.length);
 
   // Scratch buffers for colFeasible — allocated once, reused every call.
   const digBuf = new Int32Array(total + 1); // candidate digits, ascending
@@ -94,11 +116,67 @@ export function countSolutions(puzzle: Puzzle, limit: number): SolverResult {
     availMask &= ~(1 << digit);
     colPartial[c]    = (colPartial[c] ?? 0) + digit * (colWeights[r] ?? 0);
     colRowsFilled[c] = (colRowsFilled[c] ?? 0) + 1;
+    rowPartial[r]    = (rowPartial[r] ?? 0) + digit * (rowWeights[c] ?? 0);
+    rowCellsFilled[r] = (rowCellsFilled[r] ?? 0) + 1;
+    rowUsedMask[r]  = (rowUsedMask[r] ?? 0) | (1 << digit);
     for (let c2 = 0; c2 < n; c2++) colMask[c2] = (colMask[c2] ?? 0) & ~(1 << digit);
   }
 
   let count = 0;
   let nodes = 0;
+
+  type RowCandidate = { digitMask: number };
+  const rowCandidateIndexes: Array<Array<Map<number, RowCandidate[]>>> = [];
+
+  for (let r = 0; r < n; r++) {
+    const openColumns = rowOpenColumns[r] ?? [];
+    const prefixIndexes = Array.from(
+      { length: openColumns.length + 1 },
+      () => new Map<number, RowCandidate[]>(),
+    );
+    const values = new Int32Array(n);
+
+    function addCandidate(prefixLength: number, prefixCode: number, digitMask: number): void {
+      const index = prefixIndexes[prefixLength];
+      if (!index) return;
+      const candidates = index.get(prefixCode);
+      const candidate = { digitMask };
+      if (candidates) candidates.push(candidate);
+      else index.set(prefixCode, [candidate]);
+    }
+
+    function enumerate(column: number, usedMask: number, target: number): void {
+      if (column === n) {
+        if (target !== (rowTargets[r] ?? 0)) return;
+
+        let prefixLength = 0;
+        let prefixCode = 0;
+        addCandidate(0, 0, usedMask);
+        for (const openColumn of openColumns) {
+          prefixCode = prefixCode * (total + 1) + (values[openColumn] ?? 0);
+          prefixLength++;
+          addCandidate(prefixLength, prefixCode, usedMask);
+        }
+        return;
+      }
+
+      const given = puzzle.givens.get(r * n + column);
+      if (given !== undefined) {
+        values[column] = given;
+        enumerate(column + 1, usedMask | (1 << given), target + given * (rowWeights[column] ?? 0));
+        return;
+      }
+
+      for (let digit = 1; digit <= total; digit++) {
+        if ((usedMask & (1 << digit)) !== 0) continue;
+        values[column] = digit;
+        enumerate(column + 1, usedMask | (1 << digit), target + digit * (rowWeights[column] ?? 0));
+      }
+    }
+
+    enumerate(0, 0, 0);
+    rowCandidateIndexes.push(prefixIndexes);
+  }
 
   // ── Column feasibility ──────────────────────────────────────────────────────
 
@@ -142,6 +220,53 @@ export function countSolutions(puzzle: Puzzle, limit: number): SolverResult {
     return partial + minSum <= target && target <= partial + maxSum;
   }
 
+  function rowFeasible(r: number): boolean {
+    const target = rowTargets[r] ?? 0;
+    const partial = rowPartial[r] ?? 0;
+    const k = n - (rowCellsFilled[r] ?? 0);
+
+    if (k === 0) return partial === target;
+
+    let mask = availMask;
+    let found = 0;
+    while (mask !== 0) {
+      const lsb = mask & (-mask);
+      digBuf[found++] = 31 - Math.clz32(lsb);
+      mask &= mask - 1;
+    }
+
+    if (found < k) return false;
+
+    let wi = 0;
+    for (let i = 0; i < n && wi < k; i++) {
+      const c = rowWeightOrder[r * n + i] ?? 0;
+      if (grid[r * n + c] === 0 && !puzzle.givens.has(r * n + c)) {
+        wBuf[wi++] = rowWeights[c] ?? 0;
+      }
+    }
+
+    let minSum = 0;
+    let maxSum = 0;
+    for (let i = 0; i < k; i++) {
+      const w = wBuf[i] ?? 0;
+      minSum += (digBuf[i] ?? 0) * w;
+      maxSum += (digBuf[found - 1 - i] ?? 0) * w;
+    }
+
+    if (partial + minSum > target || target > partial + maxSum) return false;
+
+    const openColumns = rowOpenColumns[r] ?? [];
+    const openStart = (rowCellsFilled[r] ?? 0) - (rowGivenCounts[r] ?? 0);
+    let prefixCode = 0;
+    for (let i = 0; i < openStart; i++) {
+      const column = openColumns[i] ?? 0;
+      prefixCode = prefixCode * (total + 1) + (grid[r * n + column] ?? 0);
+    }
+    const candidates = rowCandidateIndexes[r]?.[openStart]?.get(prefixCode) ?? [];
+    const allowedMask = availMask | (rowUsedMask[r] ?? 0);
+    return candidates.some((candidate) => (candidate.digitMask & ~allowedMask) === 0);
+  }
+
   // ── Backtracking ────────────────────────────────────────────────────────────
 
   function backtrack(cellIndex: number): boolean {
@@ -166,6 +291,7 @@ export function countSolutions(puzzle: Puzzle, limit: number): SolverResult {
     const row  = Math.floor(cellIndex / n);
     const col  = cellIndex % n;
     const colW = colWeights[row] ?? 0;
+    const rowW = rowWeights[col] ?? 0;
 
     // Iterate over available digits via bitmask.
     let tryMask = availMask;
@@ -179,6 +305,9 @@ export function countSolutions(puzzle: Puzzle, limit: number): SolverResult {
       availMask         &= ~(1 << d);
       colPartial[col]    = (colPartial[col] ?? 0) + d * colW;
       colRowsFilled[col] = (colRowsFilled[col] ?? 0) + 1;
+      rowPartial[row]    = (rowPartial[row] ?? 0) + d * rowW;
+      rowCellsFilled[row] = (rowCellsFilled[row] ?? 0) + 1;
+      rowUsedMask[row]  = (rowUsedMask[row] ?? 0) | (1 << d);
 
       // Remove d from all column candidate masks; track which were cleared.
       let clearedMask = 0;
@@ -191,15 +320,7 @@ export function countSolutions(puzzle: Puzzle, limit: number): SolverResult {
 
       // ── Row pruning ──────────────────────────────────────────────────────
       let pruned = false;
-      if (col === n - 1) {
-        const rowDigits = Array.from(
-          { length: n },
-          (_, c2) => grid[row * n + c2] as number,
-        );
-        if (lineValue(rowDigits, rowWeights) !== (rowTargets[row] ?? 0)) {
-          pruned = true;
-        }
-      }
+      if (!rowFeasible(row)) pruned = true;
 
       // ── Column pruning ───────────────────────────────────────────────────
       if (!pruned) {
@@ -212,6 +333,9 @@ export function countSolutions(puzzle: Puzzle, limit: number): SolverResult {
         // Early-stop: restore and propagate.
         colRowsFilled[col] = (colRowsFilled[col] ?? 0) - 1;
         colPartial[col]    = (colPartial[col] ?? 0) - d * colW;
+        rowCellsFilled[row] = (rowCellsFilled[row] ?? 0) - 1;
+        rowPartial[row]    = (rowPartial[row] ?? 0) - d * rowW;
+        rowUsedMask[row]  = (rowUsedMask[row] ?? 0) & ~(1 << d);
         availMask         |= (1 << d);
         grid[cellIndex]    = 0;
         for (let c2 = 0; c2 < n; c2++) {
@@ -225,6 +349,9 @@ export function countSolutions(puzzle: Puzzle, limit: number): SolverResult {
       // Unplace d.
       colRowsFilled[col] = (colRowsFilled[col] ?? 0) - 1;
       colPartial[col]    = (colPartial[col] ?? 0) - d * colW;
+      rowCellsFilled[row] = (rowCellsFilled[row] ?? 0) - 1;
+      rowPartial[row]    = (rowPartial[row] ?? 0) - d * rowW;
+      rowUsedMask[row]  = (rowUsedMask[row] ?? 0) & ~(1 << d);
       availMask         |= (1 << d);
       grid[cellIndex]    = 0;
       for (let c2 = 0; c2 < n; c2++) {

@@ -505,7 +505,10 @@ export function solveBoundedWithTrace(
       outcome === "stalled" ? "stalled" : "contradiction";
 
   const terminalType = status === "solved" ? "solved" : status;
-  if (events[events.length - 1]?.type !== terminalType) {
+  const lastEvent = events[events.length - 1];
+  const terminalGridMatches = lastEvent?.grid.length === grid.length &&
+    lastEvent.grid.every((value, index) => value === grid[index]);
+  if (lastEvent?.type !== terminalType || !terminalGridMatches) {
     const terminalEvent = { type: terminalType, depth: maxReachedDepth, grid: [...grid] } as HumanSolverTraceEvent;
     if (events.length >= maxEvents) {
       events[events.length - 1] = terminalEvent;

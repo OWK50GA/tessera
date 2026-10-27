@@ -102,6 +102,7 @@ describe("human solver forced moves", () => {
     expect(result.status).toBe("solved");
     expect(result.events).toHaveLength(1);
     expect(result.events[0]?.type).toBe("solved");
+    expect(result.events[0]?.grid).toEqual(result.grid);
   });
 
   it("can solve with hidden-weight hypotheses", () => {
