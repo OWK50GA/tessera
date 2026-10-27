@@ -50,7 +50,7 @@ for (const n of sizes) {
         emptyGrid(n, generated.puzzle.givens),
         {
           ...limitsForN,
-          weightOptions: difficulty === "expert" ? defaultHiddenWeightOptions(n) : undefined,
+          ...(difficulty === "expert" ? { weightOptions: defaultHiddenWeightOptions(n) } : {}),
         },
       );
       const elapsed = performance.now() - started;
