@@ -1,15 +1,17 @@
 import { useState } from 'react'
-import { useGameActions } from '../hooks/useGame'
+import { loadSettings } from '../settings'
+import { playPath, useRouter } from '../hooks/useRouter'
 import styles from './StartScreen.module.css'
 
 export default function StartScreen() {
   const [seedInput, setSeedInput] = useState('')
-  const { startGame } = useGameActions()
+  const { navigate } = useRouter()
 
   function handleStart(n: number) {
     const num = Number(seedInput.trim())
     const seed = seedInput.trim() !== '' && Number.isInteger(num) && num >= 0 ? num : undefined
-    startGame(n, seed)
+    const resolvedSeed = seed ?? Math.floor(Math.random() * 0xFFFFFFFF)
+    navigate(playPath(n, resolvedSeed, loadSettings()))
   }
 
   return (
@@ -23,7 +25,10 @@ export default function StartScreen() {
           </span>
           <span>Tessera</span>
         </div>
-        <span className={styles.topbarNote}>A number-placement puzzle</span>
+        <nav className={styles.topbarLinks} aria-label="Site navigation">
+          <button onClick={() => navigate('/how-to-play')}>How to play</button>
+          <button onClick={() => navigate('/settings')}>Settings</button>
+        </nav>
       </header>
 
       <main className={styles.hero}>

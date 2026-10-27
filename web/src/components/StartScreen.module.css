@@ -46,6 +46,11 @@
   text-transform: uppercase;
 }
 
+.topbar {
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -75,8 +80,32 @@
   background: var(--teal);
 }
 
-.topbarNote {
-  color: var(--muted-soft);
+.topbarLinks {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.topbarLinks button {
+  padding: 0;
+  border: 0;
+  color: #d9d1c7;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.topbarLinks button:hover,
+.topbarLinks button:focus-visible {
+  color: var(--amber);
+}
+
+.topbarLinks button:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 4px;
 }
 
 .hero {
@@ -282,8 +311,12 @@
     padding-top: 1.25rem;
   }
 
-  .topbarNote {
-    display: none;
+  .topbarLinks {
+    gap: 0.65rem;
+  }
+
+  .topbarLinks button {
+    font-size: 0.58rem;
   }
 
   .hero {

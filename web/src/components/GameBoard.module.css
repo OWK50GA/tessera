@@ -55,7 +55,46 @@
   text-transform: uppercase;
 }
 
+.breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(20, 30, 39, 0.6);
+  cursor: pointer;
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.breadcrumb:hover,
+.breadcrumb:focus-visible {
+  border-color: var(--amber);
+  color: var(--ink);
+  background: var(--surface-bright);
+}
+
+.breadcrumb:focus-visible {
+  outline: 3px solid var(--amber-soft);
+  outline-offset: 2px;
+}
+
 .seed {
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.difficulty {
+  color: var(--amber);
+  font-size: 0.58rem;
+}
+
+.timer {
   color: var(--ink);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   letter-spacing: 0;
@@ -83,7 +122,18 @@
   gap: clamp(2.5rem, 7vw, 7rem);
   max-width: 1040px;
   margin: 0 auto;
-  padding: clamp(3.5rem, 8vw, 6rem) 0;
+  padding: clamp(1.35rem, 3vw, 2.25rem) 0 6rem;
+}
+
+.layoutBreadcrumb {
+  grid-column: 1 / -1;
+  margin-bottom: 0.25rem;
+}
+
+.versusMode {
+  grid-template-columns: minmax(0, 1fr) 18rem;
+  gap: clamp(2rem, 4vw, 3.5rem);
+  max-width: 1280px;
 }
 
 .boardColumn {
@@ -135,6 +185,37 @@
   color: var(--muted);
   font-size: 0.88rem;
   line-height: 1.65;
+}
+
+.versusBoards {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: start;
+  gap: 1rem;
+}
+
+.versusBoards.singleBoard {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.versusBoardsStacked {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.playerBoard {
+  min-width: 0;
+}
+
+.boardLabel {
+  display: flex;
+  align-items: flex-end;
+  min-height: 2.3rem;
+  margin: 0 0 0.65rem;
+  color: var(--muted-soft);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .boardCard {
@@ -320,6 +401,12 @@
   font-size: 0.62rem;
 }
 
+@media (max-width: 1100px) {
+  .versusBoards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 900px) {
   .layout {
     grid-template-columns: minmax(0, 1fr);
@@ -357,7 +444,7 @@
   }
 
   .layout {
-    padding-top: 3.5rem;
+    padding-top: 1.35rem;
   }
 
   .boardIntro {

@@ -1,8 +1,14 @@
 import { useGameActions } from '../hooks/useGame'
 import DigitTile from './DigitTile'
 import styles from './DigitPool.module.css'
+import type { DragEvent } from 'react'
 
-export default function DigitPool() {
+interface DigitPoolProps {
+  onDragStart?: (digit: number) => (event: DragEvent<HTMLButtonElement>) => void
+  onDragEnd?: () => void
+}
+
+export default function DigitPool({ onDragStart, onDragEnd }: DigitPoolProps) {
   const { state, selectTile } = useGameActions()
   const { tilePool, selectedTile, n } = state
 
@@ -22,6 +28,8 @@ export default function DigitPool() {
             digit={digit}
             isSelected={digit === selectedTile}
             onClick={() => selectTile(digit)}
+            onDragStart={onDragStart?.(digit)}
+            onDragEnd={onDragEnd}
           />
         )) : (
           <span className={styles.emptyPool}>All digits placed</span>

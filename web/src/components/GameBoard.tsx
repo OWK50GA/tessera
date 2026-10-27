@@ -1,34 +1,65 @@
-import { useMemo, Fragment } from 'react'
-import { checkRows, checkCols } from '@tessera/core'
+import { useEffect } from 'react'
 import { useGameActions } from '../hooks/useGame'
-import GridCell from './GridCell'
-import ClueBox from './ClueBox'
+import { useDragDrop } from '../hooks/useDragDrop'
+import { useRouter } from '../hooks/useRouter'
+import { formatDuration, useElapsedTime } from '../hooks/useElapsedTime'
+import PuzzleGrid from './PuzzleGrid'
 import DigitPool from './DigitPool'
+import Controls from './Controls'
+import HintPanel from './HintPanel'
+import RevealPanel from './RevealPanel'
+import SolverOpponentPanel from './SolverOpponentPanel'
 import styles from './GameBoard.module.css'
 
 export default function GameBoard() {
-  const { state, placeDigit, removeDigit } = useGameActions()
-  const { puzzle, grid, selectedTile, seed, phase } = state
+  const {
+    state,
+    placeDigit,
+    removeDigit,
+    dropDigit,
+    swapDigits,
+    clearGrid,
+    useHint,
+    giveUp,
+    returnToStart,
+  } = useGameActions()
+  const { navigate } = useRouter()
+  const {
+    puzzle,
+    grid,
+    selectedTile,
+    seed,
+    phase,
+    hintsUsed,
+    maxHints,
+    hintMessages,
+    difficulty,
+    timed,
+    showWeights,
+    showPartialSums,
+    startTime,
+    endTime,
+  } = state
+  const dragDrop = useDragDrop(dropDigit, swapDigits)
+  const elapsed = useElapsedTime(startTime, endTime, timed && phase === 'playing')
 
-  const rowResults = useMemo(
-    () => (puzzle ? checkRows(grid, puzzle) : []),
-    [grid, puzzle],
-  )
+  useEffect(() => {
+    if (phase !== 'playing') return
 
-  const colResults = useMemo(
-    () => (puzzle ? checkCols(grid, puzzle) : []),
-    [grid, puzzle],
-  )
+    function warnBeforeUnload(event: BeforeUnloadEvent) {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', warnBeforeUnload)
+    return () => window.removeEventListener('beforeunload', warnBeforeUnload)
+  }, [phase])
 
   if (!puzzle) return null
 
-  const { n, rowWeights, colWeights, rowTargets, colTargets } = puzzle
+  const { n } = puzzle
   const filledCount = grid.filter((value) => value !== null).length
   const totalCells = n * n
-  const solvedLines = [...rowResults, ...colResults].filter(
-    ({ lineStatus }) => lineStatus.status === 'match',
-  ).length
-
   function handleCellClick(cellIndex: number) {
     const cellValue = grid[cellIndex]
     if (cellValue === null && selectedTile !== null) {
@@ -36,6 +67,14 @@ export default function GameBoard() {
     } else if (cellValue !== null && !puzzle?.givens.has(cellIndex)) {
       removeDigit(cellIndex)
     }
+  }
+
+  function handleReturnToStart() {
+    if (phase === 'playing' && !window.confirm('Leave this unfinished puzzle? Your current session will be cleared.')) {
+      return
+    }
+    returnToStart()
+    navigate('/')
   }
 
   return (
@@ -50,16 +89,25 @@ export default function GameBoard() {
           <span>Tessera</span>
         </div>
 
-        <div className={styles.topMeta}>
-          <span className={styles.puzzleLabel}>Puzzle / {n}×{n}</span>
-          <span className={styles.seed}>Seed {seed}</span>
-          <span className={`${styles.phase} ${phase === 'won' ? styles.phaseWon : ''}`}>
+          <div className={styles.topMeta}>
+            <span className={styles.puzzleLabel}>Puzzle / {n}×{n}</span>
+            <span className={styles.difficulty}>{difficulty}</span>
+            <span className={styles.seed}>Seed {seed}</span>
+            {timed && <span className={styles.timer}>Time {formatDuration(elapsed)}</span>}
+            <span className={`${styles.phase} ${phase === 'won' ? styles.phaseWon : ''}`}>
             {phase === 'won' ? 'Solved' : 'In progress'}
           </span>
         </div>
       </header>
 
-      <main className={styles.layout}>
+      <main className={`${styles.layout} ${state.solverEnabled ? styles.versusMode : ''}`}>
+        <nav className={styles.layoutBreadcrumb} aria-label="Breadcrumb">
+          <button className={styles.breadcrumb} onClick={handleReturnToStart}>
+            <span aria-hidden="true">←</span>
+            Back to start
+          </button>
+        </nav>
+
         <section className={styles.boardColumn} aria-labelledby="game-title">
           <div className={styles.boardIntro}>
             <div>
@@ -74,75 +122,29 @@ export default function GameBoard() {
             cells can be returned to the tray.
           </p>
 
-          <div className={styles.boardCard}>
-            <div className={styles.boardLegend}>
-              <span><i className={styles.legendDot} />Targets update as you play</span>
-              <span>{solvedLines}/{n * 2} lines matched</span>
+          <div className={`${styles.versusBoards} ${state.solverEnabled ? '' : styles.singleBoard} ${state.solverEnabled && n >= 4 ? styles.versusBoardsStacked : ''}`}>
+            <div className={styles.playerBoard}>
+              {state.solverEnabled && <p className={styles.boardLabel}>Your grid</p>}
+              <PuzzleGrid
+                puzzle={puzzle}
+                grid={grid}
+                showWeights={showWeights}
+                showPartialSums={showPartialSums}
+                legendText={showPartialSums ? 'Targets update as you play' : 'Line checks reveal on completion'}
+                footerText="Weights guide each line."
+                footerCode={`#${seed}`}
+                selectedTile={selectedTile}
+                draggedDigit={dragDrop.draggedDigit}
+                draggedCellIndex={dragDrop.draggedCellIndex}
+                onCellClick={handleCellClick}
+                onDragOver={dragDrop.onDragOver}
+                onDrop={dragDrop.onDrop}
+                onDragStart={dragDrop.onCellDragStart}
+                onDragEnd={dragDrop.onDragEnd}
+              />
             </div>
 
-            <div
-              className={styles.board}
-              style={{
-                gridTemplateColumns: `repeat(${n + 2}, auto)`,
-                gridTemplateRows: `repeat(${n + 2}, auto)`,
-              }}
-            >
-              <div className={styles.corner} />
-              {Array.from({ length: n }, (_, c) => (
-                <div key={`cw-${c}`} className={styles.weightLabel}>
-                  <span>col</span>
-                  ×{colWeights[c]}
-                </div>
-              ))}
-              <div className={styles.corner} />
-
-              {Array.from({ length: n }, (_, r) => (
-                <Fragment key={r}>
-                  <div className={styles.weightLabel}>
-                    <span>row</span>
-                    ×{rowWeights[r]}
-                  </div>
-
-                  {Array.from({ length: n }, (_, c) => {
-                    const cellIndex = r * n + c
-                    const digit = grid[cellIndex] ?? null
-                    const isGiven = puzzle.givens.has(cellIndex)
-                    return (
-                      <GridCell
-                        key={`cell-${cellIndex}`}
-                        digit={digit}
-                        isGiven={isGiven}
-                        isSelected={!isGiven && digit === null && selectedTile !== null}
-                        row={r}
-                        col={c}
-                        onClick={() => handleCellClick(cellIndex)}
-                      />
-                    )
-                  })}
-
-                  <ClueBox
-                    key={`row-clue-${r}`}
-                    target={rowTargets[r] ?? 0}
-                    lineResult={rowResults[r] ?? { lineIndex: r, lineStatus: { status: 'incomplete', partialSum: 0 } }}
-                  />
-                </Fragment>
-              ))}
-
-              <div className={styles.corner} />
-              {Array.from({ length: n }, (_, c) => (
-                <ClueBox
-                  key={`col-clue-${c}`}
-                  target={colTargets[c] ?? 0}
-                  lineResult={colResults[c] ?? { lineIndex: c, lineStatus: { status: 'incomplete', partialSum: 0 } }}
-                />
-              ))}
-              <div className={styles.corner} />
-            </div>
-
-            <div className={styles.boardFooter}>
-              <span>Weights guide each line.</span>
-              <span className={styles.seedInline}>#{seed}</span>
-            </div>
+            {state.solverEnabled && <SolverOpponentPanel />}
           </div>
         </section>
 
@@ -161,7 +163,22 @@ export default function GameBoard() {
             </div>
           </div>
 
-          <DigitPool />
+          <DigitPool
+            onDragStart={dragDrop.onDragStart}
+            onDragEnd={dragDrop.onDragEnd}
+          />
+
+          <Controls
+            phase={phase}
+            hintsUsed={hintsUsed}
+            maxHints={maxHints}
+            onClear={clearGrid}
+            onHint={useHint}
+            onGiveUp={giveUp}
+            onReturnToStart={handleReturnToStart}
+          />
+
+          <HintPanel messages={hintMessages} />
 
           <div className={styles.howToCard}>
             <div className={styles.cardHeader}>
@@ -176,6 +193,8 @@ export default function GameBoard() {
           </div>
         </aside>
       </main>
+
+      <RevealPanel />
     </div>
   )
 }
